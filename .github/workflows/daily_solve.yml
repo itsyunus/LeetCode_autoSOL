@@ -1,17 +1,12 @@
 # ─────────────────────────────────────────────────────────────
 # GitHub Actions: LeetCode Daily Auto-Solver
-# Full zero-touch automation:
-#   1. Auto-refreshes LeetCode session tokens (no manual cookies!)
-#   2. Downloads bulk solutions DB
-#   3. Solves daily challenge
-#   4. Commits results
 # ─────────────────────────────────────────────────────────────
 
 name: 🧠 LeetCode Daily Auto-Solver
 
 on:
   schedule:
-    - cron: "30 0 * * *"  # Daily at 00:30 UTC
+    - cron: "30 0 * * *"
 
   workflow_dispatch:
     inputs:
@@ -40,15 +35,15 @@ permissions:
 jobs:
   solve-daily:
     name: 🎯 Solve Today's Challenge
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
-      # ── Checkout ───────────────────────────────────────────
+      # ── Checkout (uses built-in GITHUB_TOKEN — always works) ─
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Python Setup ───────────────────────────────────────
       - name: 🐍 Setup Python
@@ -62,24 +57,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # ── AUTO TOKEN REFRESH ─────────────────────────────────
-      # Logs into LeetCode with username/password, grabs fresh
-      # cookies, and updates GitHub Secrets automatically.
-      # You NEVER have to touch browser cookies again.
+      # ── AUTO TOKEN REFRESH (only if secrets are set) ───────
       - name: 🔄 Auto-refresh LeetCode tokens
-        if: ${{ github.event.inputs.skip_refresh != 'true' }}
+        if: ${{ github.event.inputs.skip_refresh != 'true' && env.HAS_LOGIN_CREDS == 'true' }}
         env:
+          HAS_LOGIN_CREDS: ${{ secrets.LEETCODE_USERNAME != '' && secrets.LEETCODE_PASSWORD != '' && secrets.GH_PAT != '' }}
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          # Install browser automation deps
           pip install playwright PyNaCl
           playwright install chromium --with-deps
-
-          # Run the token refresher
           python -m src.token_refresher
+
+      # ── Create logs dir ────────────────────────────────────
+      - name: 📁 Ensure logs directory
+        run: mkdir -p logs
 
       # ── Cache Solutions DB ─────────────────────────────────
       - name: 💾 Cache solutions database
@@ -127,11 +121,12 @@ jobs:
           name: solver-logs-${{ github.run_number }}
           path: logs/
           retention-days: 30
+          if-no-files-found: ignore
 
   # ── Keepalive ────────────────────────────────────────────────
   keepalive:
     name: 💓 Keep workflow alive
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
