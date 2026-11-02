@@ -50,22 +50,24 @@ jobs:
           playwright install chromium --with-deps
           mkdir -p logs
 
-      # ── Token Refresh (optional — only if login creds exist) ─
+      # ── Token Refresh — logs in and exports fresh tokens ───
       - name: 🔄 Auto-refresh LeetCode tokens
+        id: refresh
         continue-on-error: true
-        run: |
-          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ] || [ -z "$GH_PAT" ]; then
-            echo "⏭️  Skipping token refresh — login secrets not configured"
-            echo "   Set LEETCODE_USERNAME, LEETCODE_PASSWORD, and GH_PAT to enable auto-refresh"
-            exit 0
-          fi
-          echo "🔄 Refreshing tokens..."
-          python -m src.token_refresher
         env:
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ]; then
+            echo "⏭️  Skipping token refresh — LEETCODE_USERNAME/PASSWORD not set"
+            echo "refresh_success=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "🔄 Logging into LeetCode..."
+          python -m src.token_refresher
+          echo "refresh_success=true" >> "$GITHUB_OUTPUT"
 
       # ── Solutions DB Cache ─────────────────────────────────
       - name: 💾 Cache solutions database
@@ -88,19 +90,29 @@ jobs:
             echo "✅ Solutions DB is fresh"
           fi
 
-      # ── Solve ──────────────────────────────────────────────
+      # ── Solve — uses refreshed tokens if available, else secrets ──
       - name: 🧠 Solve daily challenge
         env:
-          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
-          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: "gemini-2.5-flash"
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SKIP_IF_SOLVED: "true"
-        run: python -m src.main
+          # Fall back to secrets if token refresh didn't run
+          LEETCODE_SESSION_SECRET: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_SECRET: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+        run: |
+          # Use refreshed tokens (from GITHUB_ENV) if set, otherwise use secrets
+          export LEETCODE_SESSION="${LEETCODE_SESSION:-$LEETCODE_SESSION_SECRET}"
+          export LEETCODE_CSRF_TOKEN="${LEETCODE_CSRF_TOKEN:-$LEETCODE_CSRF_SECRET}"
 
-      # ── Logs ───────────────────────────────────────────────
+          if [ -z "$LEETCODE_SESSION" ]; then
+            echo "❌ No LEETCODE_SESSION available — set the secret or enable auto-refresh"
+            exit 1
+          fi
+
+          python -m src.main
+
       - name: 📋 Upload logs
         if: always()
         uses: actions/upload-artifact@v4
