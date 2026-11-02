@@ -19,13 +19,19 @@ from typing import Optional, Dict, Any, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Try google-generativeai first, fall back to requests-based
+# Try google-genai (new) first, then google-generativeai (old), then raw requests
 try:
-    import google.generativeai as genai
+    from google import genai as _genai_new
     HAS_GENAI = True
+    HAS_NEW_SDK = True
 except ImportError:
-    HAS_GENAI = False
-    import requests as _requests
+    HAS_NEW_SDK = False
+    try:
+        import google.generativeai as genai
+        HAS_GENAI = True
+    except ImportError:
+        HAS_GENAI = False
+        import requests as _requests
 
 
 class SolutionGenerator:
@@ -50,7 +56,12 @@ Your code must be production-ready and accepted on first submission."""
         self.api_key = api_key
         self.model_name = model_name
 
-        if HAS_GENAI:
+        if HAS_GENAI and HAS_NEW_SDK:
+            # New google-genai SDK
+            self.client = _genai_new.Client(api_key=api_key)
+            self.model = None  # use client.models.generate_content
+        elif HAS_GENAI:
+            # Legacy google-generativeai SDK
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel(
                 model_name=model_name,
@@ -61,8 +72,10 @@ Your code must be production-ready and accepted on first submission."""
                     max_output_tokens=8192,
                 ),
             )
+            self.client = None
         else:
             self.model = None
+            self.client = None
             self._api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent"
 
     def _clean_html(self, html_content: str) -> str:
@@ -206,7 +219,19 @@ Return ONLY the Python code, nothing else."""
             try:
                 logger.info(f"Generation attempt {attempt}/{max_retries}...")
 
-                if HAS_GENAI and self.model:
+                if self.client:
+                    # New google-genai SDK
+                    response = self.client.models.generate_content(
+                        model=self.model_name,
+                        contents=self.SYSTEM_PROMPT + "\n\n" + prompt,
+                        config={
+                            "temperature": 0.1,
+                            "top_p": 0.95,
+                            "max_output_tokens": 8192,
+                        },
+                    )
+                    raw_text = response.text
+                elif HAS_GENAI and self.model:
                     response = self.model.generate_content(prompt)
                     raw_text = response.text
                 else:
@@ -290,7 +315,14 @@ Fix the solution. Common issues:
 
 Return ONLY the corrected Python class. No explanations."""
 
-        if HAS_GENAI and self.model:
+        if self.client:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=self.SYSTEM_PROMPT + "\n\n" + refinement_prompt,
+                config={"temperature": 0.1, "top_p": 0.95, "max_output_tokens": 8192},
+            )
+            raw_text = response.text
+        elif HAS_GENAI and self.model:
             response = self.model.generate_content(refinement_prompt)
             raw_text = response.text
         else:

@@ -24,6 +24,7 @@ from .leetcode_api import LeetCodeAPI
 from .solver import SolutionGenerator
 from .solutions_db import SolutionsDB
 from .bulk_downloader import BulkDownloader
+from .browser_submitter import BrowserSubmitter
 
 # ── Logging ──────────────────────────────────────────────────────────
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -57,6 +58,7 @@ class DailySolverPipeline:
         dry_run: bool = False,
     ):
         self.lc = LeetCodeAPI(leetcode_session, leetcode_csrf)
+        self.browser = BrowserSubmitter(leetcode_session, leetcode_csrf)
         self.solver = SolutionGenerator(gemini_api_key, gemini_model)
         self.db = SolutionsDB()
         self.bulk_db = BulkDownloader()
@@ -143,7 +145,7 @@ class DailySolverPipeline:
             if sample_tests and not self.dry_run:
                 logger.info("🧪 Running against sample test cases...")
                 try:
-                    run_result = self.lc.run_code(
+                    run_result = self.browser.run_code(
                         slug, qid, solution_code, sample_tests, self.lang
                     )
                     if run_result.get("status_msg") != "Accepted":
@@ -151,7 +153,6 @@ class DailySolverPipeline:
                             f"Sample test failed: {run_result.get('status_msg')} — "
                             f"attempting refinement before submission"
                         )
-                        # Refine based on test failure
                         solution_code, _ = self.solver.generate_solution_with_refinement(
                             detail, run_result, solution_code, self.lang
                         )
@@ -174,7 +175,7 @@ class DailySolverPipeline:
             for attempt in range(1, self.MAX_SUBMISSION_RETRIES + 1):
                 logger.info(f"📤 Submission attempt {attempt}/{self.MAX_SUBMISSION_RETRIES}")
 
-                sub_response = self.lc.submit_solution(slug, qid, current_code, self.lang)
+                sub_response = self.browser.submit_solution(slug, qid, current_code, self.lang)
                 sub_id = sub_response.get("submission_id")
 
                 if not sub_id:
@@ -182,7 +183,7 @@ class DailySolverPipeline:
                     continue
 
                 # Poll for result
-                submission_result = self.lc.poll_submission_result(sub_id)
+                submission_result = self.browser.poll_submission_result(sub_id)
                 status_msg = submission_result.get("status_msg", "Unknown")
 
                 if status_msg == "Accepted":
@@ -226,6 +227,7 @@ class DailySolverPipeline:
 
             # ── Step 8: Git commit (for GitHub Actions) ──────────────
             self._git_commit_results(result)
+            self.browser.close()
 
             return result
 
@@ -233,6 +235,7 @@ class DailySolverPipeline:
             logger.exception(f"Pipeline failed: {e}")
             result["status"] = "error"
             result["error"] = str(e)
+            self.browser.close()
             return result
 
     def _git_commit_results(self, result: dict):
