@@ -22,12 +22,6 @@ on:
         default: "python3"
         type: choice
         options: [python3, java, cpp, javascript, typescript, go, rust]
-      skip_refresh:
-        description: "Skip token refresh"
-        required: false
-        default: "false"
-        type: choice
-        options: ["false", "true"]
 
 permissions:
   contents: write
@@ -39,13 +33,9 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      # ── Checkout (uses built-in GITHUB_TOKEN — always works) ─
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Python Setup ───────────────────────────────────────
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
@@ -56,26 +46,28 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          mkdir -p logs
 
-      # ── AUTO TOKEN REFRESH (only if secrets are set) ───────
+      # ── Token Refresh (optional — only if login creds exist) ─
       - name: 🔄 Auto-refresh LeetCode tokens
-        if: ${{ github.event.inputs.skip_refresh != 'true' && env.HAS_LOGIN_CREDS == 'true' }}
+        continue-on-error: true
+        run: |
+          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ] || [ -z "$GH_PAT" ]; then
+            echo "⏭️  Skipping token refresh — login secrets not configured"
+            echo "   Set LEETCODE_USERNAME, LEETCODE_PASSWORD, and GH_PAT to enable auto-refresh"
+            exit 0
+          fi
+          echo "🔄 Refreshing tokens..."
+          pip install playwright PyNaCl
+          playwright install chromium --with-deps
+          python -m src.token_refresher
         env:
-          HAS_LOGIN_CREDS: ${{ secrets.LEETCODE_USERNAME != '' && secrets.LEETCODE_PASSWORD != '' && secrets.GH_PAT != '' }}
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          pip install playwright PyNaCl
-          playwright install chromium --with-deps
-          python -m src.token_refresher
 
-      # ── Create logs dir ────────────────────────────────────
-      - name: 📁 Ensure logs directory
-        run: mkdir -p logs
-
-      # ── Cache Solutions DB ─────────────────────────────────
+      # ── Solutions DB Cache ─────────────────────────────────
       - name: 💾 Cache solutions database
         uses: actions/cache@v4
         with:
@@ -85,8 +77,8 @@ jobs:
           key: solutions-db-v1-${{ hashFiles('solutions_db/_master_index.json') }}
           restore-keys: solutions-db-v1-
 
-      # ── Download Bulk Solutions ────────────────────────────
       - name: 📥 Download bulk solutions database
+        continue-on-error: true
         run: |
           if [ ! -f "solutions_db/_master_index.json" ] || \
              [ $(find solutions_db/_master_index.json -mtime +7 2>/dev/null | wc -l) -gt 0 ]; then
@@ -94,26 +86,21 @@ jobs:
             python -m src.bulk_downloader
           else
             echo "✅ Solutions DB is fresh"
-            python -c "
-          import json
-          with open('solutions_db/_master_index.json') as f:
-              print(f'📦 {len(json.load(f))} solutions indexed')
-          "
           fi
 
-      # ── Solve Daily Challenge ──────────────────────────────
+      # ── Solve ──────────────────────────────────────────────
       - name: 🧠 Solve daily challenge
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.5-flash' }}
+          GEMINI_MODEL: "gemini-2.5-flash"
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SKIP_IF_SOLVED: "true"
         run: python -m src.main
 
-      # ── Upload Logs ────────────────────────────────────────
+      # ── Logs ───────────────────────────────────────────────
       - name: 📋 Upload logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -123,7 +110,6 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-  # ── Keepalive ────────────────────────────────────────────────
   keepalive:
     name: 💓 Keep workflow alive
     runs-on: ubuntu-24.04
