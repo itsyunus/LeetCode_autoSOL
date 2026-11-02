@@ -1,0 +1,138 @@
+# ─────────────────────────────────────────────────────────────
+# GitHub Actions: LeetCode Daily Auto-Solver
+# Full zero-touch automation:
+#   1. Auto-refreshes LeetCode session tokens (no manual cookies!)
+#   2. Downloads bulk solutions DB
+#   3. Solves daily challenge
+#   4. Commits results
+# ─────────────────────────────────────────────────────────────
+
+name: 🧠 LeetCode Daily Auto-Solver
+
+on:
+  schedule:
+    - cron: "30 0 * * *"  # Daily at 00:30 UTC
+
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (generate but don't submit)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+      language:
+        description: "Solution language"
+        required: false
+        default: "python3"
+        type: choice
+        options: [python3, java, cpp, javascript, typescript, go, rust]
+      skip_refresh:
+        description: "Skip token refresh"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+permissions:
+  contents: write
+
+jobs:
+  solve-daily:
+    name: 🎯 Solve Today's Challenge
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # ── Checkout ───────────────────────────────────────────
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      # ── Python Setup ───────────────────────────────────────
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── AUTO TOKEN REFRESH ─────────────────────────────────
+      # Logs into LeetCode with username/password, grabs fresh
+      # cookies, and updates GitHub Secrets automatically.
+      # You NEVER have to touch browser cookies again.
+      - name: 🔄 Auto-refresh LeetCode tokens
+        if: ${{ github.event.inputs.skip_refresh != 'true' }}
+        env:
+          LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
+          LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          # Install browser automation deps
+          pip install playwright PyNaCl
+          playwright install chromium --with-deps
+
+          # Run the token refresher
+          python -m src.token_refresher
+
+      # ── Cache Solutions DB ─────────────────────────────────
+      - name: 💾 Cache solutions database
+        uses: actions/cache@v4
+        with:
+          path: |
+            solutions_db/
+            .repos/
+          key: solutions-db-v1-${{ hashFiles('solutions_db/_master_index.json') }}
+          restore-keys: solutions-db-v1-
+
+      # ── Download Bulk Solutions ────────────────────────────
+      - name: 📥 Download bulk solutions database
+        run: |
+          if [ ! -f "solutions_db/_master_index.json" ] || \
+             [ $(find solutions_db/_master_index.json -mtime +7 2>/dev/null | wc -l) -gt 0 ]; then
+            echo "📥 Downloading solutions database..."
+            python -m src.bulk_downloader
+          else
+            echo "✅ Solutions DB is fresh"
+            python -c "
+          import json
+          with open('solutions_db/_master_index.json') as f:
+              print(f'📦 {len(json.load(f))} solutions indexed')
+          "
+          fi
+
+      # ── Solve Daily Challenge ──────────────────────────────
+      - name: 🧠 Solve daily challenge
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-2.5-flash' }}
+          SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          SKIP_IF_SOLVED: "true"
+        run: python -m src.main
+
+      # ── Upload Logs ────────────────────────────────────────
+      - name: 📋 Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: solver-logs-${{ github.run_number }}
+          path: logs/
+          retention-days: 30
+
+  # ── Keepalive ────────────────────────────────────────────────
+  keepalive:
+    name: 💓 Keep workflow alive
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
