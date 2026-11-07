@@ -34,10 +34,10 @@ jobs:
 
     steps:
       - name: 📥 Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: "pip"
@@ -52,26 +52,23 @@ jobs:
 
       # ── Token Refresh — logs in and exports fresh tokens ───
       - name: 🔄 Auto-refresh LeetCode tokens
-        id: refresh
-        continue-on-error: true
         env:
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ]; then
-            echo "⏭️  Skipping token refresh — LEETCODE_USERNAME/PASSWORD not set"
-            echo "refresh_success=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ] || [ -z "$GH_PAT" ]; then
+            echo "❌ Set LEETCODE_USERNAME, LEETCODE_PASSWORD, and GH_PAT in repository Actions secrets."
+            echo "The solver will not continue with an expired session."
+            exit 1
           fi
-          echo "🔄 Logging into LeetCode..."
+          echo "🔄 Logging into LeetCode and validating fresh tokens..."
           python -m src.token_refresher
-          echo "refresh_success=true" >> "$GITHUB_OUTPUT"
 
       # ── Solutions DB Cache ─────────────────────────────────
       - name: 💾 Cache solutions database
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             solutions_db/
@@ -90,7 +87,7 @@ jobs:
             echo "✅ Solutions DB is fresh"
           fi
 
-      # ── Solve — uses refreshed tokens if available, else secrets ──
+      # ── Solve — only runs after successful login and token validation ──
       - name: 🧠 Solve daily challenge
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -98,34 +95,19 @@ jobs:
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SKIP_IF_SOLVED: "true"
-          # Fall back to secrets if token refresh didn't run
-          LEETCODE_SESSION_SECRET: ${{ secrets.LEETCODE_SESSION }}
-          LEETCODE_CSRF_SECRET: ${{ secrets.LEETCODE_CSRF_TOKEN }}
         run: |
-          # Use refreshed tokens (from GITHUB_ENV) if set, otherwise use secrets
-          export LEETCODE_SESSION="${LEETCODE_SESSION:-$LEETCODE_SESSION_SECRET}"
-          export LEETCODE_CSRF_TOKEN="${LEETCODE_CSRF_TOKEN:-$LEETCODE_CSRF_SECRET}"
-
-          if [ -z "$LEETCODE_SESSION" ]; then
-            echo "❌ No LEETCODE_SESSION available — set the secret or enable auto-refresh"
+          if [ -z "$LEETCODE_SESSION" ] || [ -z "$LEETCODE_CSRF_TOKEN" ]; then
+            echo "❌ Token refresh did not provide both LeetCode cookies."
             exit 1
           fi
-
           python -m src.main
 
       - name: 📋 Upload logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: solver-logs-${{ github.run_number }}
           path: logs/
           retention-days: 30
           if-no-files-found: ignore
 
-  keepalive:
-    name: 💓 Keep workflow alive
-    runs-on: ubuntu-24.04
-    if: github.event_name == 'schedule'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: gautamkrishnar/keepalive-workflow@v2
