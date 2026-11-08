@@ -339,3 +339,46 @@ Return ONLY the corrected Python class. No explanations."""
 
         return solution_code, metadata
 
+    def generate_explanation(self, detail: dict, code: str) -> str:
+        """Generate a concise explanation for a solution (Approach, Intuition, Complexity)."""
+        title = detail.get("title", "")
+        content = self._clean_html(detail.get("content", ""))
+        difficulty = detail.get("difficulty", "")
+
+        prompt = f"""Problem: {title} ({difficulty})
+
+Description:
+{content[:1500]}
+
+Solution Code:
+```python
+{code}
+```
+
+Provide a clear, crisp technical breakdown with:
+1. Core Intuition (2-3 sentences explaining the key insight)
+2. Approach (step-by-step bullet points)
+3. Complexity Analysis:
+   - Time Complexity: O(...) with brief explanation
+   - Space Complexity: O(...) with brief explanation
+
+Keep it concise and readable."""
+
+        try:
+            if self.client:
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=prompt,
+                    config={"temperature": 0.2, "max_output_tokens": 1500},
+                )
+                return response.text.strip()
+            elif HAS_GENAI and self.model:
+                response = self.model.generate_content(prompt)
+                return response.text.strip()
+            else:
+                return self._call_gemini_raw(prompt).strip()
+        except Exception as e:
+            logger.warning(f"Could not generate AI explanation: {e}")
+            return f"Optimal solution implemented in Python for {title} ({difficulty})."
+
+

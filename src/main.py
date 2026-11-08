@@ -25,6 +25,7 @@ from .solver import SolutionGenerator
 from .solutions_db import SolutionsDB
 from .bulk_downloader import BulkDownloader
 from .browser_submitter import BrowserSubmitter
+from .email_notifier import EmailNotifier
 
 # ── Logging ──────────────────────────────────────────────────────────
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -62,6 +63,7 @@ class DailySolverPipeline:
         self.solver = SolutionGenerator(gemini_api_key, gemini_model)
         self.db = SolutionsDB()
         self.bulk_db = BulkDownloader()
+        self.notifier = EmailNotifier()
         self.lang = lang
         self.skip_if_solved = skip_if_solved
         self.dry_run = dry_run
@@ -108,6 +110,13 @@ class DailySolverPipeline:
             if self.skip_if_solved and self.lc.is_already_solved(slug):
                 logger.info("✅ Already solved today — nothing to do!")
                 result["status"] = "already_solved"
+                solution_code = self.db.get_solution(slug)
+                code_text = solution_code.get("code") if solution_code else self.bulk_db.get_solution(slug)
+                self.notifier.send_report(
+                    result,
+                    code=code_text,
+                    explanation="This challenge is already completed and accepted on your LeetCode profile.",
+                )
                 return result
 
             # ── Step 3: Fetch full problem details ───────────────────
@@ -227,14 +236,25 @@ class DailySolverPipeline:
 
             # ── Step 8: Git commit (for GitHub Actions) ──────────────
             self._git_commit_results(result)
-            self.browser.close()
 
+            # ── Step 9: Email Notification ───────────────────────────
+            explanation = None
+            if result.get("status") == "accepted":
+                try:
+                    logger.info("Generating AI explanation for email report...")
+                    explanation = self.solver.generate_explanation(detail, current_code)
+                except Exception as e:
+                    logger.warning(f"Could not generate explanation: {e}")
+            self.notifier.send_report(result, code=current_code, explanation=explanation)
+
+            self.browser.close()
             return result
 
         except Exception as e:
             logger.exception(f"Pipeline failed: {e}")
             result["status"] = "error"
             result["error"] = str(e)
+            self.notifier.send_report(result, code=None, explanation=f"Pipeline error encountered: {e}")
             self.browser.close()
             return result
 

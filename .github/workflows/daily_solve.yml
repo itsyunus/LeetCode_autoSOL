@@ -97,6 +97,11 @@ jobs:
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SKIP_IF_SOLVED: "true"
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
         run: |
           if [ -z "$LEETCODE_SESSION" ] || [ -z "$LEETCODE_CSRF_TOKEN" ]; then
             echo "❌ No LeetCode tokens available."
