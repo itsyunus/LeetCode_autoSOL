@@ -50,18 +50,21 @@ jobs:
           playwright install chromium --with-deps
           mkdir -p logs
 
-      # ── Token Refresh (optional — only if credentials are set) ──
+      # ── Token Refresh (best-effort — if it fails, solver uses cookie secrets) ──
       - name: 🔄 Auto-refresh LeetCode tokens
-        if: ${{ env.HAS_LOGIN_CREDS == 'true' }}
+        continue-on-error: true
         env:
-          HAS_LOGIN_CREDS: ${{ secrets.LEETCODE_USERNAME != '' && secrets.LEETCODE_PASSWORD != '' && secrets.GH_PAT != '' }}
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          echo "🔄 Logging into LeetCode and validating fresh tokens..."
-          python -m src.token_refresher
+          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ] || [ -z "$GH_PAT" ]; then
+            echo "⏭️  No login credentials set — will use cookie secrets directly"
+            exit 0
+          fi
+          echo "🔄 Attempting LeetCode login for fresh tokens..."
+          python -m src.token_refresher || echo "⚠️  Token refresh failed — falling back to cookie secrets"
 
       # ── Solutions DB Cache ─────────────────────────────────
       - name: 💾 Cache solutions database
