@@ -50,19 +50,16 @@ jobs:
           playwright install chromium --with-deps
           mkdir -p logs
 
-      # ── Token Refresh — logs in and exports fresh tokens ───
+      # ── Token Refresh (optional — only if credentials are set) ──
       - name: 🔄 Auto-refresh LeetCode tokens
+        if: ${{ env.HAS_LOGIN_CREDS == 'true' }}
         env:
+          HAS_LOGIN_CREDS: ${{ secrets.LEETCODE_USERNAME != '' && secrets.LEETCODE_PASSWORD != '' && secrets.GH_PAT != '' }}
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ] || [ -z "$GH_PAT" ]; then
-            echo "❌ Set LEETCODE_USERNAME, LEETCODE_PASSWORD, and GH_PAT in repository Actions secrets."
-            echo "The solver will not continue with an expired session."
-            exit 1
-          fi
           echo "🔄 Logging into LeetCode and validating fresh tokens..."
           python -m src.token_refresher
 
@@ -87,9 +84,11 @@ jobs:
             echo "✅ Solutions DB is fresh"
           fi
 
-      # ── Solve — only runs after successful login and token validation ──
+      # ── Solve — uses GITHUB_ENV tokens if refreshed, otherwise falls back to secrets ──
       - name: 🧠 Solve daily challenge
         env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: "gemini-2.5-flash"
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
@@ -97,7 +96,14 @@ jobs:
           SKIP_IF_SOLVED: "true"
         run: |
           if [ -z "$LEETCODE_SESSION" ] || [ -z "$LEETCODE_CSRF_TOKEN" ]; then
-            echo "❌ Token refresh did not provide both LeetCode cookies."
+            echo "❌ No LeetCode tokens available."
+            echo "Set LEETCODE_SESSION and LEETCODE_CSRF_TOKEN in your repo's Actions secrets."
+            echo ""
+            echo "How to get them:"
+            echo "  1. Log into leetcode.com in your browser"
+            echo "  2. Open DevTools → Application → Cookies → leetcode.com"
+            echo "  3. Copy LEETCODE_SESSION and csrftoken values"
+            echo "  4. Add them as repository secrets in GitHub Settings → Secrets → Actions"
             exit 1
           fi
           python -m src.main
@@ -110,4 +116,3 @@ jobs:
           path: logs/
           retention-days: 30
           if-no-files-found: ignore
-
