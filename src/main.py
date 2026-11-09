@@ -26,6 +26,7 @@ from .solutions_db import SolutionsDB
 from .bulk_downloader import BulkDownloader
 from .browser_submitter import BrowserSubmitter
 from .email_notifier import EmailNotifier
+from .validation import validate_solution_syntax
 
 # ── Logging ──────────────────────────────────────────────────────────
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -53,7 +54,7 @@ class DailySolverPipeline:
         leetcode_session: str,
         leetcode_csrf: str,
         gemini_api_key: str,
-        gemini_model: str = "gemini-2.5-flash",
+        gemini_model: str = "gemini-3.8-flash",
         lang: str = "python3",
         skip_if_solved: bool = True,
         dry_run: bool = False,
@@ -149,35 +150,68 @@ class DailySolverPipeline:
                 gen_metadata["source"] = "ai_generated"
                 logger.info(f"Generated solution ({len(solution_code)} chars)")
 
-            # ── Step 6: Pre-validate with sample tests ───────────────
-            sample_tests = detail.get("exampleTestcases", "")
-            if sample_tests and not self.dry_run:
-                logger.info("🧪 Running against sample test cases...")
-                try:
-                    run_result = self.browser.run_code(
-                        slug, qid, solution_code, sample_tests, self.lang
-                    )
-                    if run_result.get("status_msg") != "Accepted":
-                        logger.warning(
-                            f"Sample test failed: {run_result.get('status_msg')} — "
-                            f"attempting refinement before submission"
-                        )
-                        solution_code, _ = self.solver.generate_solution_with_refinement(
-                            detail, run_result, solution_code, self.lang
-                        )
-                    else:
-                        logger.info("✅ Sample tests passed!")
-                except Exception as e:
-                    logger.warning(f"Pre-validation failed (non-fatal): {e}")
+            # ── Step 6: Fail-closed validation before submission ───────
+            try:
+                validate_solution_syntax(solution_code, self.lang)
+            except (SyntaxError, ValueError) as exc:
+                result["status"] = "validation_failed"
+                result["error"] = f"Solution syntax validation failed: {exc}"
+                self._git_commit_results(result)
+                self.notifier.send_report(result, code=solution_code)
+                self.browser.close()
+                return result
+
+            sample_tests = detail.get("exampleTestcases", "").strip()
+            if not self.dry_run:
+                if not sample_tests:
+                    result["status"] = "validation_failed"
+                    result["error"] = "LeetCode did not provide sample test input; refusing to submit unvalidated code."
+                    self._git_commit_results(result)
+                    self.notifier.send_report(result, code=solution_code)
+                    self.browser.close()
+                    return result
+
+                validation_passed = False
+                current_candidate = solution_code
+                for validation_attempt in range(1, self.MAX_SUBMISSION_RETRIES + 1):
+                    try:
+                        logger.info(f"Sample validation attempt {validation_attempt}/{self.MAX_SUBMISSION_RETRIES}")
+                        run_result = self.browser.run_code(slug, qid, current_candidate, sample_tests, self.lang)
+                        if run_result.get("status_msg") == "Accepted":
+                            solution_code = current_candidate
+                            validation_passed = True
+                            logger.info("Sample tests passed")
+                            break
+                        if validation_attempt < self.MAX_SUBMISSION_RETRIES:
+                            current_candidate, _ = self.solver.generate_solution_with_refinement(detail, run_result, current_candidate, self.lang)
+                            validate_solution_syntax(current_candidate, self.lang)
+                    except Exception as exc:
+                        logger.exception("Sample validation could not be completed")
+                        result["status"] = "validation_failed"
+                        result["error"] = f"Pre-submission validation failed; no submission was made: {exc}"
+                        break
+
+                if not validation_passed:
+                    if result["status"] != "validation_failed":
+                        result["status"] = "validation_failed"
+                        result["error"] = f"Solution did not pass sample tests after {self.MAX_SUBMISSION_RETRIES} attempts; no submission was made."
+                    self._git_commit_results(result)
+                    self.notifier.send_report(result, code=current_candidate)
+                    self.browser.close()
+                    return result
+                solution_code = current_candidate
 
             if self.dry_run:
-                logger.info("🏜️  DRY RUN — skipping submission")
-                logger.info(f"Generated code:\n{solution_code}")
+                logger.info("DRY RUN — skipping submission")
                 result["status"] = "dry_run"
                 result["solution_code"] = solution_code
+                self._git_commit_results(result)
+                self.notifier.send_report(result, code=solution_code)
+                self.browser.close()
                 return result
 
             # ── Step 7: Submit with retry loop ───────────────────────
+ ───────────────────────
             submission_result = None
             current_code = solution_code
 
@@ -318,7 +352,7 @@ def main():
         sys.exit(1)
 
     # Optional config
-    gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
     lang = os.environ.get("SOLUTION_LANGUAGE", "python3")
     dry_run = os.environ.get("DRY_RUN", "false").lower() == "true"
     skip_solved = os.environ.get("SKIP_IF_SOLVED", "true").lower() == "true"

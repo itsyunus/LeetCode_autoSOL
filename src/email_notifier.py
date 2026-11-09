@@ -10,6 +10,7 @@ Dispatches rich HTML reports containing:
 import os
 import smtplib
 import logging
+import html
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Optional, Dict, Any
@@ -144,15 +145,22 @@ class EmailNotifier:
         )
 
         problem_url = f"https://leetcode.com/problems/{slug}/" if slug else "#"
+        pid = html.escape(str(pid))
+        title = html.escape(str(title))
+        difficulty = html.escape(str(difficulty))
+        runtime = html.escape(str(runtime))
+        memory = html.escape(str(memory))
+        attempts = html.escape(str(attempts))
+        err = html.escape(str(err)) if err else None
 
         tags_html = "".join(
-            [f"<span style='display:inline-block;background:#27272a;color:#a1a1aa;padding:3px 8px;border-radius:4px;font-size:11px;margin-right:6px;margin-bottom:6px;'>{t}</span>" for t in tags]
+            [f"<span style='display:inline-block;background:#27272a;color:#a1a1aa;padding:3px 8px;border-radius:4px;font-size:11px;margin-right:6px;margin-bottom:6px;'>{html.escape(str(t))}</span>" for t in tags]
         )
 
         explanation_html = ""
         if explanation:
             # Convert newlines to formatted paragraphs / lists
-            formatted_exp = explanation.replace("\n\n", "</p><p style='margin:8px 0;line-height:1.6;'>").replace("\n", "<br>")
+            formatted_exp = html.escape(explanation).replace("\n\n", "</p><p style='margin:8px 0;line-height:1.6;'>").replace("\n", "<br>")
             explanation_html = f"""
             <div style="background:#18181b;border:1px solid #27272a;border-radius:8px;padding:18px;margin-top:20px;">
               <h3 style="margin:0 0 12px 0;font-size:14px;color:#f4f4f5;text-transform:uppercase;letter-spacing:1px;">💡 Approach & Explanation</h3>
@@ -164,7 +172,6 @@ class EmailNotifier:
 
         code_html = ""
         if code:
-            import html
             escaped_code = html.escape(code.strip())
             code_html = f"""
             <div style="background:#18181b;border:1px solid #27272a;border-radius:8px;padding:18px;margin-top:20px;">

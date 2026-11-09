@@ -112,7 +112,17 @@ class BrowserSubmitter:
                     }),
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                const body = await response.text();
+                if (!contentType.toLowerCase().includes('application/json')) {
+                    const preview = body.slice(0, 240).replace(/\s+/g, ' ');
+                    throw new Error('LeetCode returned non-JSON response (HTTP ' + response.status +
+                        ', ' + (contentType || 'unknown content type') +
+                        '). Check session validity, rate limits, or security challenge. Preview: ' + preview);
+                }
+                let data;
+                try { data = JSON.parse(body); }
+                catch (error) { throw new Error('LeetCode returned invalid JSON: ' + error.message); }
                 return { status: response.status, data };
             }
             """
@@ -158,7 +168,13 @@ class BrowserSubmitter:
                         `/submissions/detail/${submissionId}/check/`,
                         { headers: { 'Referer': 'https://leetcode.com/' } }
                     );
-                    return await response.json();
+                    const contentType = response.headers.get('content-type') || '';
+                    const body = await response.text();
+                    if (!contentType.toLowerCase().includes('application/json')) {
+                        throw new Error('LeetCode status check returned non-JSON HTTP ' + response.status);
+                    }
+                    try { return JSON.parse(body); }
+                    catch (error) { throw new Error('Invalid JSON from LeetCode status check: ' + error.message); }
                 }
                 """
                 result = page.evaluate(check_script, submission_id)
@@ -224,7 +240,15 @@ class BrowserSubmitter:
                     }),
                 });
 
-                return { status: response.status, data: await response.json() };
+                const contentType = response.headers.get('content-type') || '';
+                const body = await response.text();
+                if (!contentType.toLowerCase().includes('application/json')) {
+                    throw new Error('LeetCode run endpoint returned non-JSON HTTP ' + response.status);
+                }
+                let data;
+                try { data = JSON.parse(body); }
+                catch (error) { throw new Error('Invalid JSON from LeetCode run endpoint: ' + error.message); }
+                return { status: response.status, data };
             }
             """
 
@@ -249,7 +273,13 @@ class BrowserSubmitter:
                 check_script = """
                 async (id) => {
                     const r = await fetch(`/submissions/detail/${id}/check/`);
-                    return await r.json();
+                    const contentType = r.headers.get('content-type') || '';
+                    const body = await r.text();
+                    if (!contentType.toLowerCase().includes('application/json')) {
+                        throw new Error('LeetCode run status returned non-JSON HTTP ' + r.status);
+                    }
+                    try { return JSON.parse(body); }
+                    catch (error) { throw new Error('Invalid JSON from LeetCode run status: ' + error.message); }
                 }
                 """
                 check = page.evaluate(check_script, interpret_id)

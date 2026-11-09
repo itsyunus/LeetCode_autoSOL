@@ -52,7 +52,7 @@ RULES:
 
 Your code must be production-ready and accepted on first submission."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
+    def __init__(self, api_key: str, model_name: str = "gemini-3.8-flash"):
         self.api_key = api_key
         self.model_name = model_name
 
