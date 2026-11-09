@@ -1,6 +1,6 @@
 {
   "status": "validation_failed",
-  "date": "2026-11-09T05:37:21.582860+00:00",
+  "date": "2026-11-09T05:48:27.835078+00:00",
   "problem": {
     "id": "1606",
     "title": "Find Servers That Handled Most Number of Requests",
@@ -15,5 +15,5 @@
     ]
   },
   "submission": null,
-  "error": "Solution syntax validation failed: Python 2 API itertools.izip is not available in Python 3; use the built-in zip() instead."
+  "error": "Pre-submission validation failed; no submission was made: Page.evaluate: Error: LeetCode run endpoint returned non-JSON HTTP 429\n    at eval (eval at evaluate (:370:30), <anonymous>:26:27)\n    at async <anonymous>:396:30"
 }
