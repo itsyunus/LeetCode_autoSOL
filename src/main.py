@@ -179,17 +179,30 @@ class DailySolverPipeline:
                 logger.info(f"Generated solution ({len(solution_code)} chars)")
 
             # ── Step 6: Fail-closed validation before submission ───────
+            sample_tests = detail.get("exampleTestcases", "").strip()
             try:
                 validate_solution_syntax(solution_code, self.lang)
             except (SyntaxError, ValueError) as exc:
-                result["status"] = "validation_failed"
-                result["error"] = f"Solution syntax validation failed: {exc}"
-                self._git_commit_results(result)
-                self.notifier.send_report(result, code=solution_code)
-                self.browser.close()
-                return result
+                logger.warning("Cached/generated %s solution failed preflight: %s", self.lang, exc)
+                # A bad cached Python solution must not terminate the run immediately.
+                # Try a fresh solution in another LeetCode language and require sample acceptance.
+                fallback = None
+                if self.lang == "python3" and sample_tests:
+                    fallback = self._next_runtime_fallback(detail, slug, qid, sample_tests)
 
-            sample_tests = detail.get("exampleTestcases", "").strip()
+                if fallback:
+                    self.lang, solution_code, gen_metadata = fallback
+                    logger.info("Preflight fallback selected %s after validation failure.", self.lang)
+                else:
+                    result["status"] = "validation_failed"
+                    result["error"] = (
+                        f"Solution preflight failed in {self.lang}: {exc}. "
+                        "No LeetCode submission was made; no fallback passed sample validation."
+                    )
+                    self._git_commit_results(result)
+                    self.notifier.send_report(result, code=solution_code)
+                    self.browser.close()
+                    return result
             if not self.dry_run:
                 if not sample_tests:
                     result["status"] = "validation_failed"
@@ -437,7 +450,7 @@ def main():
     logger.info("=" * 60)
 
     # Exit with error code if failed
-    if result["status"] in ("error", "failed"):
+    if result["status"] in ("error", "failed", "validation_failed"):
         sys.exit(1)
 
 
