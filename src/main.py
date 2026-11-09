@@ -47,7 +47,7 @@ logger = logging.getLogger("leetcode-auto-solver")
 class DailySolverPipeline:
     """End-to-end daily challenge solver."""
 
-    MAX_SUBMISSION_RETRIES = 3  # Max times we'll refine & resubmit
+    MAX_SUBMISSION_RETRIES = 5  # Allows Python plus up to four language attempts
 
     def __init__(
         self,
@@ -66,8 +66,36 @@ class DailySolverPipeline:
         self.bulk_db = BulkDownloader()
         self.notifier = EmailNotifier()
         self.lang = lang
+        self.attempted_languages = [lang]
         self.skip_if_solved = skip_if_solved
         self.dry_run = dry_run
+
+    def _next_runtime_fallback(self, detail: dict, slug: str, qid: str, sample_tests: str):
+        """Generate and sample-test the next language after a Runtime Error."""
+        fallback_order = ["cpp", "java", "javascript", "go", "rust"]
+        snippets = {item.get("langSlug"): item.get("code", "")
+                    for item in detail.get("codeSnippets", [])}
+        for language in fallback_order:
+            if language in self.attempted_languages or not snippets.get(language):
+                continue
+            self.attempted_languages.append(language)
+            logger.warning("Runtime Error in %s; trying a fresh %s solution.", self.lang, language)
+            try:
+                candidate, metadata = self.solver.generate_solution(detail, lang_slug=language)
+                validate_solution_syntax(candidate, language)
+                sample_result = self.browser.run_code(slug, qid, candidate, sample_tests, language)
+                sample_status = sample_result.get("status_msg", "Unknown")
+                if sample_status != "Accepted":
+                    logger.warning("%s fallback failed sample validation: %s", language, sample_status)
+                    continue
+                metadata["source"] = "ai_language_fallback"
+                metadata["fallback_from"] = self.lang
+                metadata["language"] = language
+                logger.info("%s fallback passed sample tests.", language)
+                return language, candidate, metadata
+            except Exception as exc:
+                logger.warning("%s fallback could not be validated: %s", language, exc)
+        return None
 
     def run(self) -> dict:
         """
@@ -257,6 +285,13 @@ class DailySolverPipeline:
 
                 else:
                     logger.warning(f"Submission failed: {status_msg}")
+                    if status_msg == "Runtime Error" and attempt < self.MAX_SUBMISSION_RETRIES:
+                        fallback = self._next_runtime_fallback(detail, slug, qid, sample_tests)
+                        if fallback:
+                            self.lang, current_code, gen_metadata = fallback
+                            logger.info("Switching to %s after Runtime Error.", self.lang)
+                            continue
+
                     if attempt < self.MAX_SUBMISSION_RETRIES:
                         logger.info("🔄 Refining solution based on failure feedback...")
                         current_code, _ = self.solver.generate_solution_with_refinement(
@@ -265,7 +300,11 @@ class DailySolverPipeline:
                     else:
                         result["status"] = "failed"
                         result["error"] = f"Failed after {attempt} attempts: {status_msg}"
-                        result["submission"] = {"last_status": status_msg}
+                        result["submission"] = {
+                            "last_status": status_msg,
+                            "language": self.lang,
+                            "attempted_languages": self.attempted_languages,
+                        }
 
             # ── Step 8: Git commit (for GitHub Actions) ──────────────
             self._git_commit_results(result)
