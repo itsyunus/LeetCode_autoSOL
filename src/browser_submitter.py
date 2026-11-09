@@ -225,7 +225,7 @@ class BrowserSubmitter:
                     .find(row => row.startsWith('csrftoken='))
                     ?.split('=')[1] || '';
 
-                const response = await fetch(`/problems/${slug}/interpret_solution/`, {
+                const requestOptions = {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -238,7 +238,20 @@ class BrowserSubmitter:
                         typed_code: code,
                         data_input: testInput,
                     }),
-                });
+                };
+
+                // LeetCode may briefly rate-limit run requests. Retry only HTTP 429,
+                // honoring Retry-After when present and using bounded exponential backoff.
+                let response;
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    response = await fetch(`/problems/${slug}/interpret_solution/`, requestOptions);
+                    if (response.status !== 429 || attempt === 2) break;
+                    const retryAfter = Number(response.headers.get('Retry-After'));
+                    const delayMs = Number.isFinite(retryAfter) && retryAfter > 0
+                        ? Math.min(retryAfter * 1000, 15000)
+                        : Math.min(2000 * (2 ** attempt), 10000);
+                    await new Promise(resolve => setTimeout(resolve, delayMs));
+                }
 
                 const contentType = response.headers.get('content-type') || '';
                 const body = await response.text();
