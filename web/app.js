@@ -37,7 +37,7 @@ function validateRepo(value){const v=value.trim();if(!/^[A-Za-z0-9_.-]+\/[A-Za-z
 function baseRepo(){return "/repos/"+encodeURIComponent(repo.split("/")[0])+"/"+encodeURIComponent(repo.split("/")[1]);}
 async function connect(){
   try{
-    repo=validateRepo($("repo").value);const entered=$("token").value.trim();if(entered)token=entered;
+    repo=validateRepo($("repo").value);
     if(!unlocked)throw new Error("Unlock the dashboard first.");
     $("connect-btn").disabled=true;$("connect-btn").textContent="Connecting…";
     const [repository,workflow]=await Promise.all([api(baseRepo()),api(baseRepo()+"/actions/workflows/"+WORKFLOW)]);
@@ -97,7 +97,7 @@ async function refreshAll(silent=false){
   }catch(error){if(!silent)notice(error.message,"error");if(/session expired|permission|access|server token/i.test(error.message)){setConnected(false);setHealth("Connection needs attention",error.message,"bad");}}
 }
 async function runNow(){
-  if(!token)return;
+  if(!unlocked)return;
   const active=latestRuns.find(run=>run.status!=="completed");
   if(active){notice("A workflow is already running. Wait for it to finish before starting another.","");return;}
   const dry=$("dry-run").checked;
