@@ -140,6 +140,46 @@ class FallbackValidationTests(unittest.TestCase):
         pipeline.browser.run_code.assert_called_once()
 
 
+class ExplanationTimeoutTests(unittest.TestCase):
+    def test_explanation_timeout_returns_without_waiting_for_worker(self):
+        import time
+
+        pipeline = DailySolverPipeline.__new__(DailySolverPipeline)
+        pipeline.solver = Mock()
+        pipeline.solver.generate_explanation.side_effect = lambda *_: time.sleep(0.2) or "late"
+        started = time.monotonic()
+
+        explanation = pipeline._generate_explanation_safely(
+            {}, "class Solution: pass", timeout_seconds=0.02
+        )
+
+        elapsed = time.monotonic() - started
+        self.assertIsNone(explanation)
+        self.assertLess(elapsed, 0.15)
+
+    def test_explanation_exception_is_non_fatal(self):
+        pipeline = DailySolverPipeline.__new__(DailySolverPipeline)
+        pipeline.solver = Mock()
+        pipeline.solver.generate_explanation.side_effect = RuntimeError("Gemini unavailable")
+
+        explanation = pipeline._generate_explanation_safely(
+            {}, "class Solution: pass", timeout_seconds=1
+        )
+
+        self.assertIsNone(explanation)
+
+    def test_fast_explanation_is_returned(self):
+        pipeline = DailySolverPipeline.__new__(DailySolverPipeline)
+        pipeline.solver = Mock()
+        pipeline.solver.generate_explanation.return_value = "Use a greedy approach."
+
+        explanation = pipeline._generate_explanation_safely(
+            {}, "class Solution: pass", timeout_seconds=1
+        )
+
+        self.assertEqual(explanation, "Use a greedy approach.")
+
+
 class DashboardTests(unittest.TestCase):
     def test_escaped_title_and_metrics(self):
         page = build_dashboard([{
