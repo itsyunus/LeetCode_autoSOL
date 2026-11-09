@@ -49,7 +49,7 @@ async function connect(){
     await refreshAll();
     if(!refreshTimer)refreshTimer=setInterval(()=>{if(document.visibilityState==="visible"&&unlocked)refreshAll(true).catch(()=>{});},30000);
   }catch(error){setConnected(false);notice(error.message,"error");setHealth("Connection needs attention",error.message,"bad");}
-  finally{$("connect-btn").disabled=false;$("connect-btn").textContent="Connect GitHub";}
+  finally{$("connect-btn").disabled=false;$("connect-btn").textContent="Check GitHub connection";}
 }
 function renderResult(result){
   if(!result){$("stat-result").textContent="—";$("stat-result-sub").textContent="No saved result found";return;}
