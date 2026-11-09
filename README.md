@@ -166,3 +166,9 @@ This tool is for personal productivity and learning. Use responsibly and in acco
 
 MIT
 
+
+## Chrome extension companion
+
+Use [LeetCode Cookie Pusher](https://github.com/itsyunus/LeetCode-Cookie-Pusher) to refresh the two LeetCode cookie secrets and dispatch this workflow from Chrome. Merge the solver repair PR first, then install the extension from its repository. The extension's first-run default is **dry run**, which generates a solution and uploads dashboard/log artifacts without submitting. Open the Actions run link returned by the extension to inspect the result.
+
+The extension updates only `LEETCODE_SESSION` and `LEETCODE_CSRF_TOKEN`. Configure `GEMINI_API_KEY` separately in repository Actions secrets. Optional SMTP secrets are needed only for email notifications.
