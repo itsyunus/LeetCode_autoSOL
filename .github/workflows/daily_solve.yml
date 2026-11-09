@@ -118,6 +118,18 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
+      - name: Add execution summary
+        if: always()
+        run: |
+          {
+            echo "## LeetCode Auto-Solver"
+            echo ""
+            echo "- Workflow: \`${{ github.workflow }}\`"
+            echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "- Dashboard and solver logs are attached under this run's **Artifacts** section."
+            echo "- Dry run: \`${{ github.event.inputs.dry_run || 'false' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: 📋 Upload logs
         if: always()
         uses: actions/upload-artifact@v6
