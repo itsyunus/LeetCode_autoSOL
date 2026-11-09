@@ -95,6 +95,10 @@ class DailySolverPipeline:
                 logger.info("%s fallback passed sample tests.", language)
                 return language, candidate, metadata
             except Exception as exc:
+                # A rate limit is a service-level condition, not a bad solution.
+                # Do not hammer LeetCode by trying every language against HTTP 429.
+                if "429" in str(exc) or "Too Many Requests" in str(exc):
+                    raise
                 logger.warning("%s fallback could not be validated: %s", language, exc)
         return None
 
