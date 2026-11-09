@@ -17,6 +17,7 @@ import sys
 import json
 import logging
 import subprocess
+import threading
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -101,6 +102,40 @@ class DailySolverPipeline:
                     raise
                 logger.warning("%s fallback could not be validated: %s", language, exc)
         return None
+
+    def _generate_explanation_safely(self, detail: dict, code: str, timeout_seconds: int = 90) -> Optional[str]:
+        """Generate an optional explanation without blocking a completed submission.
+
+        The daemon worker is intentional: a stuck SDK/network call must not keep
+        the process alive after the bounded wait expires.
+        """
+        completed = threading.Event()
+        outcome = {}
+
+        def generate():
+            try:
+                outcome["explanation"] = self.solver.generate_explanation(detail, code)
+            except Exception as exc:
+                outcome["error"] = exc
+            finally:
+                completed.set()
+
+        worker = threading.Thread(
+            target=generate,
+            name="leetcode-explanation",
+            daemon=True,
+        )
+        worker.start()
+        if not completed.wait(timeout=max(1, timeout_seconds)):
+            logger.warning(
+                "AI explanation exceeded %s seconds; continuing without it.",
+                timeout_seconds,
+            )
+            return None
+        if "error" in outcome:
+            logger.warning("AI explanation failed; continuing without it: %s", outcome["error"])
+            return None
+        return outcome.get("explanation")
 
     def run(self) -> dict:
         """
@@ -349,11 +384,10 @@ class DailySolverPipeline:
             # ── Step 9: Email Notification ───────────────────────────
             explanation = None
             if result.get("status") == "accepted":
-                try:
-                    logger.info("Generating AI explanation for email report...")
-                    explanation = self.solver.generate_explanation(detail, current_code)
-                except Exception as e:
-                    logger.warning(f"Could not generate explanation: {e}")
+                logger.info("Generating optional AI explanation for email report (90-second limit)...")
+                explanation = self._generate_explanation_safely(
+                    detail, current_code, timeout_seconds=90
+                )
             self.notifier.send_report(result, code=current_code, explanation=explanation)
 
             self.browser.close()
