@@ -38,7 +38,12 @@ class SolutionGenerator:
     """Generate LeetCode solutions using Gemini AI."""
 
     SYSTEM_PROMPT = """You are an elite competitive programmer who has solved every LeetCode problem.
-You write clean, optimal Python solutions. Your solutions always pass all test cases.
+You write clean, optimal Python 3 solutions. Your solutions always pass all test cases.
+
+PYTHON VERSION REQUIREMENT:
+- Target Python 3 (LeetCode Python3), never Python 2.
+- Use built-in zip(), never itertools.izip or from itertools import izip.
+- Do not use Python 2-only APIs or syntax.
 
 RULES:
 1. Output ONLY the Python code — no explanations, no markdown fences, no comments about approach.
