@@ -70,7 +70,6 @@ Your code must be production-ready and accepted on first submission."""
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel(
                 model_name=model_name,
-                system_instruction=self.SYSTEM_PROMPT,
                 generation_config=genai.GenerationConfig(
                     max_output_tokens=8192,
                 ),
@@ -176,7 +175,7 @@ Return ONLY the {language_name} code, nothing else."""
         """Call Gemini API using raw REST when SDK is unavailable."""
         payload = {
             "contents": [
-                {"role": "user", "parts": [{"text": self.SYSTEM_PROMPT + "\n\n" + prompt}]}
+                {"role": "user", "parts": [{"text": prompt}]}
             ],
             "generationConfig": {
                 "maxOutputTokens": 8192,
@@ -314,7 +313,19 @@ Return ONLY the {language_name} code, nothing else."""
         expected = error_info.get("expected_output", "N/A")
         actual = error_info.get("code_output", "N/A")
 
-        refinement_prompt = f"""Your previous solution for this LeetCode problem was REJECTED.
+        language_names = {"python3": "Python 3", "cpp": "C++17", "java": "Java", "javascript": "JavaScript", "typescript": "TypeScript", "go": "Go", "rust": "Rust"}
+        language_name = language_names.get(lang_slug, lang_slug)
+        system_prompt = {
+            "python3": self.SYSTEM_PROMPT,
+            "cpp": "You are an expert competitive programmer. Target LeetCode C++17. Output only valid C++17 code matching the supplied template.",
+            "java": "You are an expert competitive programmer. Target LeetCode Java. Output only valid Java code matching the supplied template.",
+            "javascript": "You are an expert competitive programmer. Target LeetCode JavaScript (Node.js). Output only valid JavaScript matching the supplied template.",
+            "typescript": "You are an expert competitive programmer. Target LeetCode TypeScript. Output only valid TypeScript matching the supplied template.",
+            "go": "You are an expert competitive programmer. Target LeetCode Go. Output only valid Go code matching the supplied template.",
+            "rust": "You are an expert competitive programmer. Target LeetCode Rust. Output only valid Rust code matching the supplied template.",
+        }.get(lang_slug, self.SYSTEM_PROMPT)
+
+        refinement_prompt = f"""Your previous solution for this LeetCode problem was REJECTED. Fix it in {language_name}.
 
 === PROBLEM ===
 {clean_desc}
@@ -335,20 +346,20 @@ Fix the solution. Common issues:
 - "Runtime Error": Null pointer, index out of bounds, division by zero
 - "Memory Limit Exceeded": Use less auxiliary space
 
-Return ONLY the corrected Python class. No explanations."""
+Return ONLY the corrected {language_name} code. No explanations."""
 
         if self.client:
             response = self.client.models.generate_content(
                 model=self.model_name,
-                contents=self.SYSTEM_PROMPT + "\n\n" + refinement_prompt,
+                contents=system_prompt + "\n\n" + refinement_prompt,
                 config={"max_output_tokens": 8192},
             )
             raw_text = response.text
         elif HAS_GENAI and self.model:
-            response = self.model.generate_content(refinement_prompt)
+            response = self.model.generate_content(system_prompt + "\n\n" + refinement_prompt)
             raw_text = response.text
         else:
-            raw_text = self._call_gemini_raw(refinement_prompt)
+            raw_text = self._call_gemini_raw(system_prompt + "\n\n" + refinement_prompt)
 
         solution_code = self._extract_code_from_response(raw_text)
 
