@@ -205,11 +205,22 @@ class DailySolverPipeline:
                     try:
                         logger.info(f"Sample validation attempt {validation_attempt}/{self.MAX_SUBMISSION_RETRIES}")
                         run_result = self.browser.run_code(slug, qid, current_candidate, sample_tests, self.lang)
-                        if run_result.get("status_msg") == "Accepted":
+                        sample_status = run_result.get("status_msg", "Unknown")
+                        if sample_status == "Accepted":
                             solution_code = current_candidate
                             validation_passed = True
                             logger.info("Sample tests passed")
                             break
+                        if sample_status == "Runtime Error":
+                            fallback = self._next_runtime_fallback(
+                                detail, slug, qid, sample_tests
+                            )
+                            if fallback:
+                                self.lang, current_candidate, gen_metadata = fallback
+                                solution_code = current_candidate
+                                validation_passed = True
+                                logger.info("Runtime-error fallback passed samples in %s.", self.lang)
+                                break
                         if validation_attempt < self.MAX_SUBMISSION_RETRIES:
                             current_candidate, _ = self.solver.generate_solution_with_refinement(detail, run_result, current_candidate, self.lang)
                             validate_solution_syntax(current_candidate, self.lang)
@@ -266,6 +277,7 @@ class DailySolverPipeline:
                         "runtime_percentile": submission_result.get("runtime_percentile"),
                         "memory_percentile": submission_result.get("memory_percentile"),
                         "attempts": attempt,
+                        "language": self.lang,
                     }
 
                     # Cache the solution
