@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from src.validation import validate_solution_syntax
 from src.dashboard import build_dashboard
 from src.leetcode_api import LeetCodeAPI
+from src.solver import SolutionGenerator
 
 
 class LeetCodeResponseTests(unittest.TestCase):
@@ -40,6 +41,54 @@ class ValidationTests(unittest.TestCase):
     def test_missing_solution_class(self):
         with self.assertRaises(ValueError):
             validate_solution_syntax("def solve(): return 1")
+
+    def test_rejects_itertools_izip(self):
+        code = "\n".join([
+            "import itertools",
+            "class Solution:",
+            "    def solve(self, arrival, load):",
+            "        return list(itertools.izip(arrival, load))",
+        ])
+        with self.assertRaisesRegex(ValueError, "use the built-in zip"):
+            validate_solution_syntax(code)
+
+    def test_rejects_from_itertools_import_izip(self):
+        code = "\n".join(["from itertools import izip", "class Solution: pass"])
+        with self.assertRaisesRegex(ValueError, "use the built-in zip"):
+            validate_solution_syntax(code)
+
+    def test_accepts_python3_zip(self):
+        code = "\n".join([
+            "class Solution:",
+            "    def solve(self, arrival, load):",
+            "        return list(zip(arrival, load))",
+        ])
+        validate_solution_syntax(code)
+
+
+class LanguageGenerationTests(unittest.TestCase):
+    def setUp(self):
+        self.generator = SolutionGenerator.__new__(SolutionGenerator)
+
+    def test_cpp_prompt_uses_cpp_template_and_language(self):
+        prompt = self.generator._build_prompt(
+            problem_description="Find the sum.",
+            code_template="class Solution { public: int sum(int a, int b) { return 0; } };",
+            difficulty="Easy",
+            topic_tags=[],
+            hints=[],
+            sample_tests="1 2",
+            lang_slug="cpp",
+        )
+        self.assertIn("C++17 solution", prompt)
+        self.assertIn("C++17 code", prompt)
+        self.assertNotIn("Python code", prompt)
+
+    def test_extract_cpp_code_fence(self):
+        code = self.generator._extract_code_from_response(
+            "```cpp\nclass Solution {};\n```"
+        )
+        self.assertEqual(code, "class Solution {};")
 
 
 class DashboardTests(unittest.TestCase):
