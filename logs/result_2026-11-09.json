@@ -1,6 +1,6 @@
 {
-  "status": "validation_failed",
-  "date": "2026-11-09T05:48:27.835078+00:00",
+  "status": "accepted",
+  "date": "2026-11-09T05:56:27.793287+00:00",
   "problem": {
     "id": "1606",
     "title": "Find Servers That Handled Most Number of Requests",
@@ -14,6 +14,14 @@
       "Ordered Set"
     ]
   },
-  "submission": null,
-  "error": "Pre-submission validation failed; no submission was made: Page.evaluate: Error: LeetCode run endpoint returned non-JSON HTTP 429\n    at eval (eval at evaluate (:370:30), <anonymous>:26:27)\n    at async <anonymous>:396:30"
+  "submission": {
+    "id": 2192283967,
+    "runtime": "154 ms",
+    "memory": "125.5 MB",
+    "runtime_percentile": 44.33880000000006,
+    "memory_percentile": 40.25070000000008,
+    "attempts": 1,
+    "language": "cpp"
+  },
+  "error": null
 }

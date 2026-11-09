@@ -1,0 +1,28 @@
+{
+  "solutions": {
+    "find-servers-that-handled-most-number-of-requests": {
+      "file": "1606_find-servers-that-handled-most-number-of-requests.py",
+      "question_id": "1710",
+      "title": "Find Servers That Handled Most Number of Requests",
+      "difficulty": "Hard",
+      "solved_at": "2026-11-09T06:00:52.843775+00:00",
+      "metadata": {
+        "frontend_id": "1606",
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "language": "cpp",
+        "question_id": "1710",
+        "title": "Find Servers That Handled Most Number of Requests",
+        "source": "ai_language_fallback",
+        "fallback_from": "python3",
+        "sample_validation_passed": true
+      }
+    }
+  },
+  "stats": {
+    "total": 1,
+    "easy": 0,
+    "medium": 0,
+    "hard": 1
+  }
+}
