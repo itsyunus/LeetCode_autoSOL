@@ -13,7 +13,7 @@ $("repo").value = repo;
 
 function headers(){return {"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};}
 async function api(path, options={}){
-  const response = await fetch(API + path, { ...options, headers:{...headers(),...(options.headers||{})} });
+  const response = await fetch(API + "?path=" + encodeURIComponent(path), { ...options, credentials:"same-origin", headers:{...headers(),...(options.headers||{})} });
   if(response.status===204)return null;
   const text=await response.text();
   let data={};try{data=text?JSON.parse(text):{};}catch(_){throw new Error("GitHub returned an unexpected response (HTTP "+response.status+").");}
