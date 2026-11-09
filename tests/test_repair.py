@@ -1,7 +1,29 @@
 import unittest
+from unittest.mock import Mock
 from src.validation import validate_solution_syntax
 from src.dashboard import build_dashboard
+from src.leetcode_api import LeetCodeAPI
 
+
+class LeetCodeResponseTests(unittest.TestCase):
+    def test_non_json_response_has_actionable_diagnostic(self):
+        response = Mock()
+        response.json.side_effect = ValueError("not JSON")
+        response.headers = {"Content-Type": "text/html"}
+        response.status_code = 403
+        with self.assertRaisesRegex(RuntimeError, "non-JSON response.*HTTP 403"):
+            LeetCodeAPI._response_json(response, "LeetCode GraphQL")
+
+    def test_json_response_must_be_an_object(self):
+        response = Mock()
+        response.json.return_value = ["unexpected"]
+        with self.assertRaisesRegex(RuntimeError, "unexpected JSON payload"):
+            LeetCodeAPI._response_json(response, "LeetCode API")
+
+    def test_valid_json_response(self):
+        response = Mock()
+        response.json.return_value = {"ok": True}
+        self.assertEqual(LeetCodeAPI._response_json(response, "LeetCode API"), {"ok": True})
 
 class ValidationTests(unittest.TestCase):
     def test_valid_solution(self):
