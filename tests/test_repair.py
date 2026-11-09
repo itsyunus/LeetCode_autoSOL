@@ -42,7 +42,7 @@ class ValidationTests(unittest.TestCase):
             validate_solution_syntax("def solve(): return 1")
 
     def test_rejects_itertools_izip(self):
-        code = "\\n".join([
+        code = "\n".join([
             "import itertools",
             "class Solution:",
             "    def solve(self, arrival, load):",
@@ -52,12 +52,12 @@ class ValidationTests(unittest.TestCase):
             validate_solution_syntax(code)
 
     def test_rejects_from_itertools_import_izip(self):
-        code = "\\n".join(["from itertools import izip", "class Solution: pass"])
+        code = "\n".join(["from itertools import izip", "class Solution: pass"])
         with self.assertRaisesRegex(ValueError, "use the built-in zip"):
             validate_solution_syntax(code)
 
     def test_accepts_python3_zip(self):
-        code = "\\n".join([
+        code = "\n".join([
             "class Solution:",
             "    def solve(self, arrival, load):",
             "        return list(zip(arrival, load))",
