@@ -91,6 +91,7 @@ class DailySolverPipeline:
                 metadata["source"] = "ai_language_fallback"
                 metadata["fallback_from"] = self.lang
                 metadata["language"] = language
+                metadata["sample_validation_passed"] = True
                 logger.info("%s fallback passed sample tests.", language)
                 return language, candidate, metadata
             except Exception as exc:
@@ -212,9 +213,16 @@ class DailySolverPipeline:
                     self.browser.close()
                     return result
 
-                validation_passed = False
+                # A fallback selected during preflight has already passed this exact
+                # sample run. Reuse that result instead of immediately hitting LeetCode
+                # a second time (which can trigger HTTP 429 rate limiting).
+                validation_passed = bool(gen_metadata.get("sample_validation_passed"))
                 current_candidate = solution_code
-                for validation_attempt in range(1, self.MAX_SUBMISSION_RETRIES + 1):
+                if validation_passed:
+                    logger.info("Reusing successful %s fallback sample validation; skipping duplicate run.", self.lang)
+                for validation_attempt in (
+                    range(1, self.MAX_SUBMISSION_RETRIES + 1) if not validation_passed else ()
+                ):
                     try:
                         logger.info(f"Sample validation attempt {validation_attempt}/{self.MAX_SUBMISSION_RETRIES}")
                         run_result = self.browser.run_code(slug, qid, current_candidate, sample_tests, self.lang)
