@@ -50,21 +50,10 @@ jobs:
           playwright install chromium --with-deps
           mkdir -p logs
 
-      # ── Token Refresh (best-effort — if it fails, solver uses cookie secrets) ──
-      - name: 🔄 Auto-refresh LeetCode tokens
-        continue-on-error: true
-        env:
-          LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
-          LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
-          GH_PAT: ${{ secrets.GH_PAT }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ -z "$LEETCODE_USERNAME" ] || [ -z "$LEETCODE_PASSWORD" ] || [ -z "$GH_PAT" ]; then
-            echo "⏭️  No login credentials set — will use cookie secrets directly"
-            exit 0
-          fi
-          echo "🔄 Attempting LeetCode login for fresh tokens..."
-          python -m src.token_refresher || echo "⚠️  Token refresh failed — falling back to cookie secrets"
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+      # Automatic credential refresh is disabled; only existing repository secrets are used.
 
       # ── Solutions DB Cache ─────────────────────────────────
       - name: 💾 Cache solutions database
@@ -93,7 +82,7 @@ jobs:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GEMINI_MODEL: "gemini-2.5-flash"
+          GEMINI_MODEL: "gemini-3.8-flash"
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SKIP_IF_SOLVED: "true"
@@ -115,6 +104,31 @@ jobs:
             exit 1
           fi
           python -m src.main
+
+      - name: Generate progress dashboard
+        if: always()
+        run: python -m src.dashboard
+
+      - name: Upload dashboard artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: leetcode-progress-dashboard-${{ github.run_number }}
+          path: dashboard/index.html
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Add execution summary
+        if: always()
+        run: |
+          {
+            echo "## LeetCode Auto-Solver"
+            echo ""
+            echo "- Workflow: \`${{ github.workflow }}\`"
+            echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "- Dashboard and solver logs are attached under this run's **Artifacts** section."
+            echo "- Dry run: \`${{ github.event.inputs.dry_run || 'false' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 📋 Upload logs
         if: always()

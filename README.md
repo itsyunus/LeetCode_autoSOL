@@ -13,7 +13,7 @@ Fully automated system that solves your LeetCode daily challenge every day — e
 │  1. Fetch daily challenge ──→ LeetCode GraphQL API           │
 │  2. Check if already solved ──→ Skip if yes                  │
 │  3. Check local cache ──→ Use cached solution if available   │
-│  4. Generate solution ──→ Gemini AI (2.5 Flash)              │
+│  4. Generate solution ──→ Gemini AI (3.8 Flash)              │
 │  5. Pre-validate ──→ Run against sample test cases           │
 │  6. Submit solution ──→ LeetCode Submit API                  │
 │  7. Handle failures ──→ AI refinement loop (up to 3x)       │
@@ -105,24 +105,19 @@ Set these as GitHub Actions variables (Settings → Variables → Actions):
 
 | Variable | Default | Description |
 |---|---|---|
-| `GEMINI_MODEL` | `gemini-2.5-flash` | Which Gemini model to use |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | Which Gemini model to use |
 | `SOLUTION_LANGUAGE` | `python3` | Language for solutions |
 | `DRY_RUN` | `false` | Generate without submitting |
 | `SKIP_IF_SOLVED` | `true` | Skip if already solved today |
 
-## 🔄 Token Refresh Automation
+## 🔐 Session Token Safety
 
-LeetCode session tokens expire. To minimize manual work:
-
-1. **Option A (Simple):** Set a calendar reminder every 2 weeks to refresh tokens
-2. **Option B (Advanced):** Use a browser extension like [Cookie AutoRefresh] to extend token life
-
-When refreshing:
-1. Log into LeetCode in your browser
-2. Copy the new `LEETCODE_SESSION` and `csrftoken` values
-3. Update them in GitHub Secrets
+The daily workflow uses existing `LEETCODE_SESSION` and `LEETCODE_CSRF_TOKEN` repository secrets. Automatic credential refresh is disabled: this project does not log in with your LeetCode password or write to GitHub Secrets. If the session expires, update the two cookie secrets manually in GitHub Settings → Secrets and variables → Actions. Never commit tokens or passwords.
 
 ## 📊 Tracking Your Progress
+
+Each workflow run generates a self-contained HTML progress dashboard and uploads it as a `leetcode-progress-dashboard` artifact. Unit tests run before the solver starts.
+
 
 Every solved problem is:
 - **Saved** in the `solutions/` directory with metadata
@@ -171,3 +166,9 @@ This tool is for personal productivity and learning. Use responsibly and in acco
 
 MIT
 
+
+## Chrome extension companion
+
+Use [LeetCode Cookie Pusher](https://github.com/itsyunus/LeetCode-Cookie-Pusher) to refresh the two LeetCode cookie secrets and dispatch this workflow from Chrome. Merge the solver repair PR first, then install the extension from its repository. The extension's first-run default is **dry run**, which generates a solution and uploads dashboard/log artifacts without submitting. Open the Actions run link returned by the extension to inspect the result.
+
+The extension updates only `LEETCODE_SESSION` and `LEETCODE_CSRF_TOKEN`. Configure `GEMINI_API_KEY` separately in repository Actions secrets. Optional SMTP secrets are needed only for email notifications.

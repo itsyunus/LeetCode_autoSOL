@@ -37,6 +37,22 @@ class LeetCodeAPI:
             ),
         })
 
+    @staticmethod
+    def _response_json(response, endpoint: str) -> Dict[str, Any]:
+        """Decode API JSON with a useful error when a proxy/login page returns HTML."""
+        try:
+            data = response.json()
+        except ValueError as exc:
+            content_type = response.headers.get("Content-Type", "unknown")
+            raise RuntimeError(
+                f"{endpoint} returned a non-JSON response "
+                f"(HTTP {response.status_code}, content type: {content_type}). "
+                "Check LeetCode session validity, rate limits, or a security challenge."
+            ) from exc
+        if not isinstance(data, dict):
+            raise RuntimeError(f"{endpoint} returned an unexpected JSON payload.")
+        return data
+
     def _graphql(self, query: str, variables: Optional[Dict] = None) -> Dict[str, Any]:
         """Execute a GraphQL query against LeetCode's API."""
         payload = {"query": query}
@@ -45,7 +61,7 @@ class LeetCodeAPI:
 
         resp = self.session.post(LEETCODE_GRAPHQL_URL, json=payload, timeout=30)
         resp.raise_for_status()
-        data = resp.json()
+        data = self._response_json(resp, "LeetCode GraphQL")
 
         if "errors" in data:
             raise RuntimeError(f"GraphQL errors: {json.dumps(data['errors'], indent=2)}")
@@ -186,7 +202,7 @@ class LeetCodeAPI:
         logger.info(f"Submitting solution for '{slug}' in {lang_slug}...")
         resp = self.session.post(url, json=payload, timeout=30)
         resp.raise_for_status()
-        result = resp.json()
+        result = self._response_json(resp, "LeetCode submission")
         submission_id = result.get("submission_id")
         logger.info(f"Submission ID: {submission_id}")
         return result
@@ -196,7 +212,7 @@ class LeetCodeAPI:
         url = f"{LEETCODE_BASE_URL}/submissions/detail/{submission_id}/check/"
         resp = self.session.get(url, timeout=30)
         resp.raise_for_status()
-        return resp.json()
+        return self._response_json(resp, "LeetCode submission status")
 
     def poll_submission_result(
         self, submission_id: int, max_retries: int = 20, interval: float = 2.0
@@ -249,7 +265,7 @@ class LeetCodeAPI:
 
         resp = self.session.post(url, json=payload, timeout=30)
         resp.raise_for_status()
-        result = resp.json()
+        result = self._response_json(resp, "LeetCode sample-test request")
         interpret_id = result.get("interpret_id")
 
         # Poll for run result
@@ -257,7 +273,7 @@ class LeetCodeAPI:
             check_url = f"{LEETCODE_BASE_URL}/submissions/detail/{interpret_id}/check/"
             check_resp = self.session.get(check_url, timeout=30)
             check_resp.raise_for_status()
-            check_result = check_resp.json()
+            check_result = self._response_json(check_resp, "LeetCode sample-test status")
 
             if check_result.get("state") == "SUCCESS":
                 return check_result
