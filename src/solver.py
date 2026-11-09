@@ -89,13 +89,12 @@ Your code must be production-ready and accepted on first submission."""
         return text.strip()
 
     def _extract_code_from_response(self, response_text: str) -> str:
-        """Extract clean Python code from AI response, handling various formats."""
+        """Extract clean source code from AI response, regardless of language."""
         text = response_text.strip()
 
-        # Try to extract from markdown code blocks
+        # Accept common language fences and generic fences.
         patterns = [
-            r'```python\s*\n(.*?)```',
-            r'```python3\s*\n(.*?)```',
+            r'```(?:python3?|cpp|c\+\+|java|javascript|js|typescript|go|rust)?\s*\n(.*?)```',
             r'```\s*\n(.*?)```',
         ]
         for pattern in patterns:
@@ -135,6 +134,7 @@ Your code must be production-ready and accepted on first submission."""
         topic_tags: list,
         hints: list,
         sample_tests: str,
+        lang_slug: str = "python3",
     ) -> str:
         """Build the generation prompt with all available context."""
         clean_desc = self._clean_html(problem_description)
@@ -142,7 +142,14 @@ Your code must be production-ready and accepted on first submission."""
         tags_str = ", ".join(t["name"] if isinstance(t, dict) else t for t in topic_tags)
         hints_str = "\n".join(f"  - {h}" for h in hints) if hints else "None"
 
-        prompt = f"""Solve this LeetCode problem. Return ONLY the complete Python class with the solution method.
+        language_names = {
+            "python3": "Python 3", "cpp": "C++17", "java": "Java",
+            "javascript": "JavaScript", "typescript": "TypeScript",
+            "go": "Go", "rust": "Rust",
+        }
+        language_name = language_names.get(lang_slug, lang_slug)
+
+        prompt = f"""Solve this LeetCode problem. Return ONLY the complete {language_name} solution using the exact LeetCode template below.
 
 === PROBLEM (Difficulty: {difficulty}) ===
 {clean_desc}
@@ -159,8 +166,9 @@ Your code must be production-ready and accepted on first submission."""
 === SAMPLE TEST CASES ===
 {sample_tests}
 
-Write the complete solution class. Use optimal time/space complexity for a {difficulty} problem.
-Return ONLY the Python code, nothing else."""
+Write the complete solution in {language_name}. Use optimal time/space complexity for a {difficulty} problem.
+Preserve the exact required class/function signature and include all required imports.
+Return ONLY the {language_name} code, nothing else."""
 
         return prompt
 
@@ -205,7 +213,20 @@ Return ONLY the Python code, nothing else."""
         if not code_template:
             raise ValueError(f"No code template found for language: {lang_slug}")
 
-        # Build the prompt
+        # Build a language-specific prompt. Never reuse Python instructions for C++/Java.
+        language_prompts = {
+            "python3": self.SYSTEM_PROMPT,
+            "cpp": "You are an expert competitive programmer. Target LeetCode C++17. Output only valid C++17 code matching the supplied template. Use standard headers and handle all edge cases.",
+            "java": "You are an expert competitive programmer. Target the LeetCode Java version. Output only valid Java code matching the supplied template and class/method signature. Handle all edge cases.",
+            "javascript": "You are an expert competitive programmer. Target LeetCode JavaScript (Node.js). Output only valid JavaScript matching the supplied template and signature. Handle all edge cases.",
+            "typescript": "You are an expert competitive programmer. Target LeetCode TypeScript. Output only valid TypeScript matching the supplied template and signature. Handle all edge cases.",
+            "go": "You are an expert competitive programmer. Target LeetCode Go. Output only valid Go code matching the supplied template and signature. Handle all edge cases.",
+            "rust": "You are an expert competitive programmer. Target LeetCode Rust. Output only valid Rust code matching the supplied template and signature. Handle all edge cases.",
+        }
+        system_prompt = language_prompts.get(lang_slug)
+        if not system_prompt:
+            raise ValueError(f"Unsupported fallback language: {lang_slug}")
+
         prompt = self._build_prompt(
             problem_description=question_detail.get("content", ""),
             code_template=code_template,
@@ -213,6 +234,7 @@ Return ONLY the Python code, nothing else."""
             topic_tags=question_detail.get("topicTags", []),
             hints=question_detail.get("hints", []),
             sample_tests=question_detail.get("exampleTestcases", ""),
+            lang_slug=lang_slug,
         )
 
         last_error = None
@@ -224,33 +246,34 @@ Return ONLY the Python code, nothing else."""
                     # New google-genai SDK
                     response = self.client.models.generate_content(
                         model=self.model_name,
-                        contents=self.SYSTEM_PROMPT + "\n\n" + prompt,
+                        contents=system_prompt + "\n\n" + prompt,
                         config={
                             "max_output_tokens": 8192,
                         },
                     )
                     raw_text = response.text
                 elif HAS_GENAI and self.model:
-                    response = self.model.generate_content(prompt)
+                    response = self.model.generate_content(system_prompt + "\n\n" + prompt)
                     raw_text = response.text
                 else:
-                    raw_text = self._call_gemini_raw(prompt)
+                    raw_text = self._call_gemini_raw(system_prompt + "\n\n" + prompt)
 
                 solution_code = self._extract_code_from_response(raw_text)
 
                 # Basic validation: ensure it has the class and method structure
-                if "class Solution" not in solution_code:
-                    logger.warning(f"Attempt {attempt}: Missing 'class Solution', retrying...")
-                    prompt += "\n\nIMPORTANT: Your response MUST contain 'class Solution' with the exact method signature from the template."
-                    continue
-
-                # Validate syntax
-                try:
-                    compile(solution_code, "<solution>", "exec")
-                except SyntaxError as se:
-                    logger.warning(f"Attempt {attempt}: Syntax error: {se}, retrying...")
-                    prompt += f"\n\nYour previous attempt had a syntax error: {se}. Fix it."
-                    continue
+                if lang_slug == "python3":
+                    if "class Solution" not in solution_code:
+                        logger.warning(f"Attempt {attempt}: Missing 'class Solution', retrying...")
+                        prompt += "\n\nIMPORTANT: Include class Solution and the exact method signature."
+                        continue
+                    try:
+                        compile(solution_code, "<solution>", "exec")
+                    except SyntaxError as se:
+                        logger.warning(f"Attempt {attempt}: Syntax error: {se}, retrying...")
+                        prompt += f"\n\nYour previous attempt had a syntax error: {se}. Fix it."
+                        continue
+                elif not solution_code.strip():
+                    raise ValueError("The generated solution is empty.")
 
                 metadata = {
                     "attempts": attempt,
