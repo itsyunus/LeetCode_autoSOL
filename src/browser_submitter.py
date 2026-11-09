@@ -115,7 +115,7 @@ class BrowserSubmitter:
                 const contentType = response.headers.get('content-type') || '';
                 const body = await response.text();
                 if (!contentType.toLowerCase().includes('application/json')) {
-                    const preview = body.slice(0, 240).replace(/\s+/g, ' ');
+                    const preview = body.slice(0, 240).replace(/\\s+/g, ' ');
                     throw new Error('LeetCode returned non-JSON response (HTTP ' + response.status +
                         ', ' + (contentType || 'unknown content type') +
                         '). Check session validity, rate limits, or security challenge. Preview: ' + preview);
