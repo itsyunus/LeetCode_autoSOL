@@ -10,6 +10,18 @@
   <title>LeetCode Control Center</title>
 </head>
 <body>
+  <section id="lock-screen" class="lock-screen">
+    <form id="unlock-form" class="unlock-card">
+      <div class="brand-mark unlock-mark">LC</div>
+      <div class="eyebrow">PRIVATE WORKSPACE</div>
+      <h1>Unlock automation</h1>
+      <p>Enter your secret passcode to activate your LeetCode control center.</p>
+      <label class="field"><span>Secret passcode</span><input id="passcode" type="password" inputmode="numeric" autocomplete="current-password" placeholder="Enter passcode" required></label>
+      <button id="unlock-btn" class="primary-btn" type="submit">Unlock dashboard <span class="btn-arrow">→</span></button>
+      <div id="unlock-error" class="unlock-error" role="alert"></div>
+      <small>Private access · Session expires automatically</small>
+    </form>
+  </section>
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="./"><span class="brand-mark">LC</span><span>LeetCode<span class="muted"> / Control</span></span></a>
@@ -83,14 +95,14 @@
 
       <section id="settings" class="panel settings-panel">
         <div class="panel-heading"><div><div class="eyebrow">ONE-TIME SETUP</div><h3>Connect your GitHub</h3></div><span class="lock-label">⌑ Private session</span></div>
-        <p class="panel-description">Use a fine-grained GitHub token for this repository with <b>Actions: Read and write</b>. The token stays in this browser tab's session storage and is never sent to our server.</p>
+        <p class="panel-description">GitHub access is securely handled by the server after you unlock this dashboard. Your GitHub token is never exposed to this page or stored on your phone.</p>
         <div class="connect-form">
-          <label class="field"><span>Repository</span><input id="repo" type="text" value="itsyunus/LeetCode_autoSOL" autocomplete="off" spellcheck="false"></label>
-          <label class="field"><span>GitHub fine-grained token</span><input id="token" type="password" placeholder="github_pat_••••••••••••" autocomplete="off"></label>
-          <div class="connect-actions"><button id="connect-btn" class="secondary-btn">Connect GitHub</button><button id="forget-btn" class="ghost-btn">Forget token</button></div>
+          <label class="field"><span>Repository</span><input id="repo" type="text" value="itsyunus/LeetCode_autoSOL" autocomplete="off" spellcheck="false" readonly></label>
+          <div class="server-auth-note"><b>Server connection</b><span>GitHub credentials are stored as encrypted Vercel environment variables.</span></div>
+          <div class="connect-actions"><button id="connect-btn" class="secondary-btn">Check GitHub connection</button><button id="forget-btn" class="ghost-btn">Lock dashboard</button></div>
         </div>
-        <div class="security-note"><span>🔒</span><span><b>Security by design</b><br>Your token is held only in session storage. Close the browser tab to clear it. Never paste your LeetCode cookies here.</span></div>
-        <div class="setup-help">Need a token? <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create a fine-grained token ↗</a>. Select only your solver repository and grant Actions read/write access.</div>
+        <div class="security-note"><span>🔒</span><span><b>Security by design</b><br>The passcode unlocks a short-lived, HttpOnly server session. GitHub credentials remain server-side. Never paste your LeetCode cookies here.</span></div>
+        <div class="setup-help">The server needs a fine-grained GitHub token with access to this repository and Actions read/write permission.</div>
       </section>
 
       <footer><span>LeetCode Control Center</span><span>Built around your existing solver · <a href="https://github.com/itsyunus/LeetCode_autoSOL" target="_blank" rel="noopener">Solver repo</a> · <a href="https://github.com/itsyunus/LeetCode-Cookie-Pusher" target="_blank" rel="noopener">Cookie extension</a></span></footer>
