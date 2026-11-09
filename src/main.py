@@ -211,7 +211,6 @@ class DailySolverPipeline:
                 return result
 
             # ── Step 7: Submit with retry loop ───────────────────────
- ───────────────────────
             submission_result = None
             current_code = solution_code
 
