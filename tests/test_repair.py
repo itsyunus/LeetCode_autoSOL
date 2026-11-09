@@ -41,6 +41,29 @@ class ValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_solution_syntax("def solve(): return 1")
 
+    def test_rejects_itertools_izip(self):
+        code = (
+            "import itertools\\n"
+            "class Solution:\\n"
+            "    def solve(self, arrival, load):\\n"
+            "        return list(itertools.izip(arrival, load))"
+        )
+        with self.assertRaisesRegex(ValueError, "use the built-in zip"):
+            validate_solution_syntax(code)
+
+    def test_rejects_from_itertools_import_izip(self):
+        code = "from itertools import izip\\nclass Solution: pass"
+        with self.assertRaisesRegex(ValueError, "use the built-in zip"):
+            validate_solution_syntax(code)
+
+    def test_accepts_python3_zip(self):
+        code = (
+            "class Solution:\\n"
+            "    def solve(self, arrival, load):\\n"
+            "        return list(zip(arrival, load))"
+        )
+        validate_solution_syntax(code)
+
 
 class DashboardTests(unittest.TestCase):
     def test_escaped_title_and_metrics(self):
