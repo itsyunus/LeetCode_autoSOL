@@ -1,25 +1,25 @@
 "use strict";
-const API = "https://api.github.com";
+const API = "/api/github";
 const DEFAULT_REPO = "itsyunus/LeetCode_autoSOL";
 const WORKFLOW = "daily_solve.yml";
 const $ = (id) => document.getElementById(id);
 let repo = localStorage.getItem("lc-control-repo") || DEFAULT_REPO;
-let token = sessionStorage.getItem("lc-control-token") || "";
+let unlocked = false;
 let latestRuns = [];
 let refreshTimer = null;
 
 $("repo").value = repo;
-if (token) $("token").placeholder = "Token available for this browser session";
 
-function headers(){return {"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28",...(token?{"Authorization":"Bearer "+token}:{})};}
+
+function headers(){return {"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};}
 async function api(path, options={}){
   const response = await fetch(API + path, { ...options, headers:{...headers(),...(options.headers||{})} });
   if(response.status===204)return null;
   const text=await response.text();
   let data={};try{data=text?JSON.parse(text):{};}catch(_){throw new Error("GitHub returned an unexpected response (HTTP "+response.status+").");}
   if(!response.ok){
-    if(response.status===401)throw new Error("GitHub token is invalid or expired. Reconnect with a fresh token.");
-    if(response.status===403)throw new Error("GitHub denied this request. Check that the token has Actions read/write permission and repository access.");
+    if(response.status===401)throw new Error("Your dashboard session expired. Unlock it again.");
+    if(response.status===403)throw new Error("GitHub denied this request. Check the server token permissions and repository access.");
     if(response.status===404)throw new Error("Repository or workflow was not found. Check the owner/repository name.");
     throw new Error(data.message||("GitHub API request failed (HTTP "+response.status+")."));
   }
@@ -38,16 +38,16 @@ function baseRepo(){return "/repos/"+encodeURIComponent(repo.split("/")[0])+"/"+
 async function connect(){
   try{
     repo=validateRepo($("repo").value);const entered=$("token").value.trim();if(entered)token=entered;
-    if(!token)throw new Error("Enter a GitHub fine-grained token to connect.");
+    if(!unlocked)throw new Error("Unlock the dashboard first.");
     $("connect-btn").disabled=true;$("connect-btn").textContent="Connecting…";
     const [repository,workflow]=await Promise.all([api(baseRepo()),api(baseRepo()+"/actions/workflows/"+WORKFLOW)]);
     if(repository.full_name.toLowerCase()!==repo.toLowerCase())throw new Error("GitHub returned a different repository than expected.");
     if(workflow.state!=="active")throw new Error("The daily solver workflow is not active in this repository.");
-    sessionStorage.setItem("lc-control-token",token);localStorage.setItem("lc-control-repo",repo);
-    $("repo").value=repo;$("token").value="";$("token").placeholder="Token available for this browser session";
+    localStorage.setItem("lc-control-repo",repo);
+    $("repo").value=repo;
     setConnected(true);clearNotice();setHealth("Connected to GitHub","Workflow found: "+workflow.name,"good");
     await refreshAll();
-    if(!refreshTimer)refreshTimer=setInterval(()=>{if(document.visibilityState==="visible"&&token)refreshAll(true).catch(()=>{});},30000);
+    if(!refreshTimer)refreshTimer=setInterval(()=>{if(document.visibilityState==="visible"&&unlocked)refreshAll(true).catch(()=>{});},30000);
   }catch(error){setConnected(false);notice(error.message,"error");setHealth("Connection needs attention",error.message,"bad");}
   finally{$("connect-btn").disabled=false;$("connect-btn").textContent="Connect GitHub";}
 }
@@ -85,7 +85,7 @@ function renderRuns(runs){
   list.querySelectorAll("[data-run]").forEach(button=>button.addEventListener("click",()=>loadRunDetails(button.dataset.run)));
 }
 async function refreshAll(silent=false){
-  if(!token)return;
+  if(!unlocked)return;
   try{
     const data=await api(baseRepo()+"/actions/workflows/"+WORKFLOW+"/runs?per_page=10");
     renderRuns(data.workflow_runs||[]);
@@ -94,7 +94,7 @@ async function refreshAll(silent=false){
     if(active){setHealth("Solver is running",stateLabel(active)+" · run #"+active.run_number,"good");$("run-btn").disabled=true;}
     else{setHealth("Automation is ready","Latest workflow status: "+(latestRuns[0]?stateLabel(latestRuns[0]):"No runs yet"),"good");$("run-btn").disabled=false;}
     if(!silent)clearNotice();
-  }catch(error){if(!silent)notice(error.message,"error");if(/token|permission|access/i.test(error.message)){setConnected(false);setHealth("Connection needs attention",error.message,"bad");}}
+  }catch(error){if(!silent)notice(error.message,"error");if(/session expired|permission|access|server token/i.test(error.message)){setConnected(false);setHealth("Connection needs attention",error.message,"bad");}}
 }
 async function runNow(){
   if(!token)return;
@@ -116,7 +116,7 @@ async function runNow(){
     }
     if($("notice").textContent.includes("Waiting"))notice("GitHub accepted the dispatch. The run may take a few seconds to appear; refresh the dashboard shortly.","success");
   }catch(error){notice(error.message,"error");}
-  finally{$("run-btn").disabled=!token;$("run-btn").innerHTML='<span>▶</span> Run now <span class="btn-arrow">→</span>';}
+  finally{$("run-btn").disabled=!unlocked;$("run-btn").innerHTML='<span>▶</span> Run now <span class="btn-arrow">→</span>';}
 }
 async function loadRunDetails(id){
   try{
@@ -134,11 +134,34 @@ $("connect-btn").addEventListener("click",connect);
 $("run-btn").addEventListener("click",runNow);
 $("refresh-btn").addEventListener("click",()=>refreshAll());
 $("forget-btn").addEventListener("click",()=>{
-  sessionStorage.removeItem("lc-control-token");token="";if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;}
-  $("token").value="";$("token").placeholder="github_pat_••••••••••••";setConnected(false);setHealth("Waiting for connection","Connect GitHub to inspect the workflow.");notice("GitHub token cleared from this browser session.","success");
+  fetch("/api/logout",{method:"POST",credentials:"same-origin"}).catch(()=>{});
+  unlocked=false;if(refreshTimer){clearInterval(refreshTimer);refreshTimer=null;}
+  setConnected(false);setHealth("Dashboard locked","Enter your passcode to activate automation.");
+  $("lock-screen").classList.remove("hidden");$("passcode").value="";notice("Dashboard locked.","success");
 });
 $("dry-run").addEventListener("change",()=>{$("dry-hint").textContent=$("dry-run").checked?"Dry run generates and validates a solution without submitting it to LeetCode.":"Live mode may submit a solution to your LeetCode account.";});
 document.querySelectorAll(".mobile-nav a").forEach(link=>link.addEventListener("click",()=>{document.querySelectorAll(".mobile-nav a").forEach(item=>item.classList.remove("selected"));link.classList.add("selected");}));
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
-setConnected(Boolean(token));
-if(token)connect();
+async function checkSession(){
+  try{
+    const response=await fetch("/api/session",{credentials:"same-origin",cache:"no-store"});
+    const data=await response.json();
+    unlocked=Boolean(response.ok&&data.authenticated);
+    if(unlocked){$("lock-screen").classList.add("hidden");await connect();}
+    else{$("lock-screen").classList.remove("hidden");setConnected(false);}
+  }catch(_){$("lock-screen").classList.remove("hidden");setConnected(false);}
+}
+$("unlock-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const button=$("unlock-btn"),error=$("unlock-error");
+  button.disabled=true;button.textContent="Unlocking…";error.textContent="";
+  try{
+    const response=await fetch("/api/unlock",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({passcode:$("passcode").value})});
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||"Unable to unlock dashboard.");
+    unlocked=true;$("lock-screen").classList.add("hidden");$("passcode").value="";
+    await connect();
+  }catch(err){error.textContent=err.message;$("passcode").select();}
+  finally{button.disabled=false;button.innerHTML='Unlock dashboard <span class="btn-arrow">→</span>';}
+});
+checkSession();
