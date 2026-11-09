@@ -67,8 +67,6 @@ Your code must be production-ready and accepted on first submission."""
                 model_name=model_name,
                 system_instruction=self.SYSTEM_PROMPT,
                 generation_config=genai.GenerationConfig(
-                    temperature=0.1,
-                    top_p=0.95,
                     max_output_tokens=8192,
                 ),
             )
@@ -168,8 +166,6 @@ Return ONLY the Python code, nothing else."""
                 {"role": "user", "parts": [{"text": self.SYSTEM_PROMPT + "\n\n" + prompt}]}
             ],
             "generationConfig": {
-                "temperature": 0.1,
-                "topP": 0.95,
                 "maxOutputTokens": 8192,
             },
         }
@@ -225,8 +221,6 @@ Return ONLY the Python code, nothing else."""
                         model=self.model_name,
                         contents=self.SYSTEM_PROMPT + "\n\n" + prompt,
                         config={
-                            "temperature": 0.1,
-                            "top_p": 0.95,
                             "max_output_tokens": 8192,
                         },
                     )
@@ -319,7 +313,7 @@ Return ONLY the corrected Python class. No explanations."""
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=self.SYSTEM_PROMPT + "\n\n" + refinement_prompt,
-                config={"temperature": 0.1, "top_p": 0.95, "max_output_tokens": 8192},
+                config={"max_output_tokens": 8192},
             )
             raw_text = response.text
         elif HAS_GENAI and self.model:
@@ -369,7 +363,7 @@ Keep it concise and readable."""
                 response = self.client.models.generate_content(
                     model=self.model_name,
                     contents=prompt,
-                    config={"temperature": 0.2, "max_output_tokens": 1500},
+                    config={"max_output_tokens": 1500},
                 )
                 return response.text.strip()
             elif HAS_GENAI and self.model:
