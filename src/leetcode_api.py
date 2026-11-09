@@ -265,7 +265,7 @@ class LeetCodeAPI:
 
         resp = self.session.post(url, json=payload, timeout=30)
         resp.raise_for_status()
-        result = resp.json()
+        result = self._response_json(resp, "LeetCode sample-test request")
         interpret_id = result.get("interpret_id")
 
         # Poll for run result
