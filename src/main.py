@@ -126,7 +126,7 @@ class DailySolverPipeline:
             daemon=True,
         )
         worker.start()
-        if not completed.wait(timeout=max(1, timeout_seconds)):
+        if not completed.wait(timeout=max(0.01, timeout_seconds)):
             logger.warning(
                 "AI explanation exceeded %s seconds; continuing without it.",
                 timeout_seconds,
