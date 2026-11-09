@@ -3,23 +3,23 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "src/api/**/*.js",
       "use": "@vercel/node"
     },
     {
-      "src": "*.html",
+      "src": "src/*.html",
       "use": "@vercel/static"
     },
     {
-      "src": "*.css",
+      "src": "src/*.css",
       "use": "@vercel/static"
     },
     {
-      "src": "*.js",
+      "src": "src/*.js",
       "use": "@vercel/static"
     },
     {
-      "src": "*.webmanifest",
+      "src": "src/*.webmanifest",
       "use": "@vercel/static"
     }
   ]
