@@ -86,7 +86,7 @@ class LanguageGenerationTests(unittest.TestCase):
 
     def test_extract_cpp_code_fence(self):
         code = self.generator._extract_code_from_response(
-            "```cpp\\nclass Solution {};\\n```"
+            "```cpp\nclass Solution {};\n```"
         )
         self.assertEqual(code, "class Solution {};")
 
