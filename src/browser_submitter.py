@@ -256,6 +256,9 @@ class BrowserSubmitter:
                 const contentType = response.headers.get('content-type') || '';
                 const body = await response.text();
                 if (!contentType.toLowerCase().includes('application/json')) {
+                    if (response.status === 403) {
+                        throw new Error('LeetCode rejected run request with HTTP 403. Your LEETCODE_SESSION cookie has expired — please refresh cookies using the LeetCode Cookie Pusher extension.');
+                    }
                     throw new Error('LeetCode run endpoint returned non-JSON HTTP ' + response.status);
                 }
                 let data;

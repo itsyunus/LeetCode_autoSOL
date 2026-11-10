@@ -306,7 +306,10 @@ class LeetCodeAPI:
             "limit": limit,
             "offset": 0,
         })
-        return data["questionSubmissionList"]["submissions"]
+        question_data = data.get("questionSubmissionList")
+        if not question_data or not isinstance(question_data, dict):
+            return []
+        return question_data.get("submissions") or []
 
     def is_already_solved(self, slug: str) -> bool:
         """Check if the user has already solved this problem today."""
