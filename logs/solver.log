@@ -215,3 +215,52 @@ Traceback (most recent call last):
   File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/errors.py", line 218, in raise_error
     raise ServerError(status_code, response_json, response)
 google.genai.errors.ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 07:40:49,788 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-10 07:40:49,808 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-10 07:40:49,809 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 07:40:49,810 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 07:40:49,810 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-10 07:40:52,596 [INFO] leetcode-auto-solver: ============================================================
+2026-11-10 07:40:52,596 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-10 07:40:52,596 [INFO] leetcode-auto-solver: ============================================================
+2026-11-10 07:40:52,780 [INFO] src.leetcode_api: Daily challenge: [3693] Climbing Stairs II (Medium)
+2026-11-10 07:40:52,780 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3693] Climbing Stairs II (Medium)
+2026-11-10 07:40:52,871 [WARNING] src.leetcode_api: Could not check submission history: 'NoneType' object is not iterable
+2026-11-10 07:40:53,024 [INFO] src.leetcode_api: Fetched details for: Climbing Stairs II
+2026-11-10 07:40:53,024 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii (source: kamyu104/LeetCode-Solutions)
+2026-11-10 07:40:53,024 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-10 07:40:53,025 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-10 07:40:53,515 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-10 07:40:56,687 [ERROR] leetcode-auto-solver: Sample validation could not be completed
+Traceback (most recent call last):
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/main.py", line 267, in run
+    run_result = self.browser.run_code(slug, qid, current_candidate, sample_tests, self.lang)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/browser_submitter.py", line 268, in run_code
+    result = page.evaluate(
+             ^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/sync_api/_generated.py", line 16876, in evaluate
+    self._sync(
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/_sync_base.py", line 124, in _sync
+    return task.result()
+           ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/page.py", line 894, in evaluate
+    return await self._main_frame.evaluate(expression=expression, arg=arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/frame.py", line 380, in evaluate
+    result = await self._channel.evaluateExpression(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 398, in _mapped
+    return mapper(await awaitable)
+                  ^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 387, in finish
+    raise e from None
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/channel_owner.py", line 352, in finish
+    result = await zone.run_async(lambda: awaitable)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/playwright/_impl/utils/zones.py", line 58, in run_async
+    return await func()
+           ^^^^^^^^^^^^
+playwright._impl._errors.Error: Page.evaluate: Error: LeetCode run endpoint returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:39:27)
+    at async <anonymous>:381:23
