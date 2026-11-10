@@ -264,3 +264,26 @@ Traceback (most recent call last):
 playwright._impl._errors.Error: Page.evaluate: Error: LeetCode run endpoint returned non-JSON HTTP 403
     at eval (eval at evaluate (:370:30), <anonymous>:39:27)
     at async <anonymous>:381:23
+2026-11-10 17:22:40,610 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-10 17:22:40,630 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-10 17:22:40,631 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 17:22:40,632 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 17:22:40,632 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-10 17:22:43,592 [INFO] leetcode-auto-solver: ============================================================
+2026-11-10 17:22:43,592 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-10 17:22:43,592 [INFO] leetcode-auto-solver: ============================================================
+2026-11-10 17:22:43,780 [INFO] src.leetcode_api: Daily challenge: [3693] Climbing Stairs II (Medium)
+2026-11-10 17:22:43,781 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3693] Climbing Stairs II (Medium)
+2026-11-10 17:22:44,101 [INFO] src.leetcode_api: Fetched details for: Climbing Stairs II
+2026-11-10 17:22:44,101 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii (source: kamyu104/LeetCode-Solutions)
+2026-11-10 17:22:44,101 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-10 17:22:44,102 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-10 17:22:44,535 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-10 17:22:48,588 [ERROR] leetcode-auto-solver: Sample validation could not be completed
+Traceback (most recent call last):
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/main.py", line 267, in run
+    run_result = self.browser.run_code(slug, qid, current_candidate, sample_tests, self.lang)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/browser_submitter.py", line 283, in run_code
+    raise RuntimeError(f"Run returned {result['status']}")
+RuntimeError: Run returned 403

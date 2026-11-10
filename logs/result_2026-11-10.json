@@ -1,6 +1,6 @@
 {
   "status": "validation_failed",
-  "date": "2026-11-10T07:40:52.596402+00:00",
+  "date": "2026-11-10T17:22:43.592621+00:00",
   "problem": {
     "id": "3693",
     "title": "Climbing Stairs II",
@@ -13,5 +13,5 @@
     ]
   },
   "submission": null,
-  "error": "Pre-submission validation failed; no submission was made: Page.evaluate: Error: LeetCode run endpoint returned non-JSON HTTP 403\n    at eval (eval at evaluate (:370:30), <anonymous>:39:27)\n    at async <anonymous>:381:23"
+  "error": "Pre-submission validation failed; no submission was made: Run returned 403"
 }
