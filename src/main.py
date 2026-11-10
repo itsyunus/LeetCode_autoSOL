@@ -98,7 +98,7 @@ class DailySolverPipeline:
                 if sample_status != "Accepted":
                     logger.warning("%s fallback failed sample validation: %s", language, sample_status)
                     continue
-                metadata["source"] = "ai_language_fallback"
+                metadata.setdefault("source", "ai_language_fallback")
                 metadata["fallback_from"] = self.lang
                 metadata["language"] = language
                 metadata["sample_validation_passed"] = True
