@@ -104,3 +104,114 @@ playwright._impl._errors.Error: Page.evaluate: Error: LeetCode run endpoint retu
 2026-11-10 03:33:23,517 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii (source: kamyu104/LeetCode-Solutions)
 2026-11-10 03:33:23,517 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
 2026-11-10 03:33:23,518 [INFO] leetcode-auto-solver: DRY RUN — skipping submission
+2026-11-10 03:36:10,238 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-10 03:36:10,258 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-10 03:36:10,259 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 03:36:10,259 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 03:36:10,260 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-10 03:36:12,450 [INFO] leetcode-auto-solver: ============================================================
+2026-11-10 03:36:12,450 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-10 03:36:12,450 [INFO] leetcode-auto-solver: ============================================================
+2026-11-10 03:36:12,788 [INFO] src.leetcode_api: Daily challenge: [3693] Climbing Stairs II (Medium)
+2026-11-10 03:36:12,788 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3693] Climbing Stairs II (Medium)
+2026-11-10 03:36:13,608 [INFO] src.leetcode_api: Fetched details for: Climbing Stairs II
+2026-11-10 03:36:13,608 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii (source: kamyu104/LeetCode-Solutions)
+2026-11-10 03:36:13,608 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-10 03:36:13,609 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-10 03:36:14,064 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-10 03:36:22,875 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-10 03:36:22,876 [INFO] src.solver: Generation attempt 1/3...
+2026-11-10 03:36:22,889 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:42:46,373 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+2026-11-10 03:42:46,379 [INFO] src.solver: Solution generated successfully on attempt 1
+2026-11-10 03:42:51,575 [WARNING] leetcode-auto-solver: cpp fallback could not be validated: Run returned 403
+2026-11-10 03:42:51,575 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh java solution.
+2026-11-10 03:42:51,575 [INFO] src.solver: Generation attempt 1/3...
+2026-11-10 03:42:51,575 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:42:51,774 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:42:51,775 [ERROR] src.solver: Attempt 1 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'The service is currently unavailable.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:42:53,775 [INFO] src.solver: Generation attempt 2/3...
+2026-11-10 03:42:53,776 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:42:53,890 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:42:53,891 [ERROR] src.solver: Attempt 2 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'The service is currently unavailable.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:42:57,891 [INFO] src.solver: Generation attempt 3/3...
+2026-11-10 03:42:57,891 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:43:12,108 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:43:12,109 [ERROR] src.solver: Attempt 3 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:43:12,109 [WARNING] leetcode-auto-solver: java fallback could not be validated: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:43:12,109 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh javascript solution.
+2026-11-10 03:43:12,109 [INFO] src.solver: Generation attempt 1/3...
+2026-11-10 03:43:12,109 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:43:43,215 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:43:43,216 [ERROR] src.solver: Attempt 1 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:43:45,216 [INFO] src.solver: Generation attempt 2/3...
+2026-11-10 03:43:45,216 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:48:51,963 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 200 OK"
+2026-11-10 03:48:51,965 [INFO] src.solver: Solution generated successfully on attempt 2
+2026-11-10 03:48:56,015 [WARNING] leetcode-auto-solver: javascript fallback could not be validated: Run returned 403
+2026-11-10 03:48:56,015 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh rust solution.
+2026-11-10 03:48:56,015 [INFO] src.solver: Generation attempt 1/3...
+2026-11-10 03:48:56,015 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:48:56,257 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:48:56,258 [ERROR] src.solver: Attempt 1 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:48:58,258 [INFO] src.solver: Generation attempt 2/3...
+2026-11-10 03:48:58,258 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:48:59,024 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:48:59,025 [ERROR] src.solver: Attempt 2 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:49:03,025 [INFO] src.solver: Generation attempt 3/3...
+2026-11-10 03:49:03,025 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:49:03,475 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:49:03,476 [ERROR] src.solver: Attempt 3 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:49:03,476 [WARNING] leetcode-auto-solver: rust fallback could not be validated: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-10 03:49:03,476 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-10 03:49:32,599 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-10 03:49:32,599 [ERROR] leetcode-auto-solver: Sample validation could not be completed
+Traceback (most recent call last):
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/main.py", line 285, in run
+    current_candidate, _ = self.solver.generate_solution_with_refinement(detail, run_result, current_candidate, self.lang)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/solver.py", line 352, in generate_solution_with_refinement
+    response = self.client.models.generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/models.py", line 5957, in generate_content
+    response = self._generate_content_with_continuation(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/models.py", line 5798, in _generate_content_with_continuation
+    response = self._generate_content(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/models.py", line 4346, in _generate_content
+    response = self._api_client.request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/_api_client.py", line 2179, in request
+    response = self._request(http_request, http_options, stream=False)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/_api_client.py", line 1955, in _request
+    return self._retry(self._request_once, http_request, stream)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/tenacity/__init__.py", line 470, in __call__
+    do = self.iter(retry_state=retry_state)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/tenacity/__init__.py", line 371, in iter
+    result = action(retry_state)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/tenacity/__init__.py", line 413, in exc_check
+    raise retry_exc.reraise()
+          ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/tenacity/__init__.py", line 184, in reraise
+    raise self.last_attempt.result()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/tenacity/__init__.py", line 473, in __call__
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/_api_client.py", line 1932, in _request_once
+    errors.APIError.raise_for_response(response)
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/errors.py", line 187, in raise_for_response
+    cls.raise_error(response.status_code, response_json, response)
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/google/genai/errors.py", line 218, in raise_error
+    raise ServerError(status_code, response_json, response)
+google.genai.errors.ServerError: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
