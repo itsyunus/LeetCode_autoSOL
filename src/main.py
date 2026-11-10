@@ -82,7 +82,16 @@ class DailySolverPipeline:
             self.attempted_languages.append(language)
             logger.warning("Runtime Error in %s; trying a fresh %s solution.", self.lang, language)
             try:
-                candidate, metadata = self.solver.generate_solution(detail, lang_slug=language)
+                online = self.bulk_db.fetch_online_solution(
+                    slug, detail.get("questionFrontendId", ""), language,
+                    title=detail.get("title"),
+                )
+                if online:
+                    candidate = online["code"]
+                    metadata = dict(online)
+                else:
+                    candidate, metadata = self.solver.generate_solution(detail, lang_slug=language)
+                    metadata["source"] = "ai_language_fallback"
                 validate_solution_syntax(candidate, language)
                 sample_result = self.browser.run_code(slug, qid, candidate, sample_tests, language)
                 sample_status = sample_result.get("status_msg", "Unknown")
@@ -193,7 +202,10 @@ class DailySolverPipeline:
 
             # ── Step 4: Check local cache + bulk DB ────────────────
             cached = self.db.get_solution(slug)
-            bulk_code = self.bulk_db.get_solution(slug)
+            if cached and cached.get("metadata", {}).get("language", "python3") != self.lang:
+                logger.info("Local cache language does not match %s; checking language-specific sources.", self.lang)
+                cached = None
+            bulk_code = self.bulk_db.get_solution(slug, self.lang)
 
             if cached:
                 logger.info("📦 Found in local solve cache — using it")
@@ -210,13 +222,22 @@ class DailySolverPipeline:
                 solution_code = bulk_code
                 gen_metadata = {"source": "bulk_db"}
             else:
-                # ── Step 5: Generate solution with AI ────────────────
-                logger.info("🤖 No cached solution — generating with AI...")
-                solution_code, gen_metadata = self.solver.generate_solution(
-                    detail, lang_slug=self.lang
+                # ── Step 5: Search online repositories before using Gemini ──
+                logger.info("🌐 No local solution — searching public solution repositories...")
+                online = self.bulk_db.fetch_online_solution(
+                    slug, frontend_id, self.lang, title=title
                 )
-                gen_metadata["source"] = "ai_generated"
-                logger.info(f"Generated solution ({len(solution_code)} chars)")
+                if online:
+                    solution_code = online["code"]
+                    gen_metadata = dict(online)
+                    logger.info("Downloaded %s solution from %s", self.lang, online["source"])
+                else:
+                    logger.info("No public solution found — using Gemini as final fallback...")
+                    solution_code, gen_metadata = self.solver.generate_solution(
+                        detail, lang_slug=self.lang
+                    )
+                    gen_metadata["source"] = "ai_generated"
+                logger.info("Selected solution (%s chars)", len(solution_code))
 
             # ── Step 6: Fail-closed validation before submission ───────
             sample_tests = detail.get("exampleTestcases", "").strip()
