@@ -603,12 +603,18 @@ class BulkDownloader:
             code_file.write_text(sol["code"], encoding="utf-8")
 
             # Add to index
-            self.index[slug] = {
+            entry = self.index.setdefault(slug, {})
+            entry.update({
                 "id": sol["id"],
                 "title": sol["title"],
                 "slug": slug,
                 "file": f"code/{safe_name}.py",
                 "source": sol["source"],
+            })
+            entry.setdefault("languages", {})["python3"] = {
+                "file": f"code/{safe_name}.py",
+                "source": sol["source"],
+                "language": "python3",
             }
 
         self._save_index()
