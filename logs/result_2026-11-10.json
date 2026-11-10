@@ -1,0 +1,18 @@
+{
+  "status": "dry_run",
+  "date": "2026-11-10T03:33:22.365738+00:00",
+  "problem": {
+    "id": "3693",
+    "title": "Climbing Stairs II",
+    "slug": "climbing-stairs-ii",
+    "difficulty": "Medium",
+    "date": "2026-11-10",
+    "tags": [
+      "Array",
+      "Dynamic Programming"
+    ]
+  },
+  "submission": null,
+  "error": null,
+  "solution_code": "# Time:  O(n)\n# Space: O(1)\n\n# dp\nclass Solution(object):\n    def climbStairs(self, n, costs):\n        \"\"\"\n        :type n: int\n        :type costs: List[int]\n        :rtype: int\n        \"\"\"\n        a, b, c = float(\"inf\"), float(\"inf\"), 0\n        for i in xrange(n):\n            a, b, c = b, c, costs[i]+min(a+3**2, b+2**2, c+1**2)\n        return c\n\n\n# Time:  O(n)\n# Space: O(n)\n# dp\nclass Solution2(object):\n    def climbStairs(self, n, costs):\n        \"\"\"\n        :type n: int\n        :type costs: List[int]\n        :rtype: int\n        \"\"\"\n        dp = [float(\"inf\")]*(n+1)\n        dp[0] = 0\n        for i in xrange(n):\n            dp[i+1] = costs[i]+min(dp[i-j]+(j+1)**2 for j in xrange(min(3, i+1)))\n        return dp[n]\n"
+}
