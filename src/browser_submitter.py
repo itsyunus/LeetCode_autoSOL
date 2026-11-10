@@ -48,7 +48,7 @@ class BrowserSubmitter:
             viewport={"width": 1920, "height": 1080},
         )
 
-        # Inject LeetCode session cookies
+        # Inject LeetCode session cookies (both root and dot domain)
         self._context.add_cookies([
             {
                 "name": "LEETCODE_SESSION",
@@ -60,6 +60,18 @@ class BrowserSubmitter:
                 "name": "csrftoken",
                 "value": self.csrf_token,
                 "domain": ".leetcode.com",
+                "path": "/",
+            },
+            {
+                "name": "LEETCODE_SESSION",
+                "value": self.session_token,
+                "domain": "leetcode.com",
+                "path": "/",
+            },
+            {
+                "name": "csrftoken",
+                "value": self.csrf_token,
+                "domain": "leetcode.com",
                 "path": "/",
             },
         ])
@@ -92,11 +104,12 @@ class BrowserSubmitter:
             # This inherits all cookies + Cloudflare clearance
             submit_script = """
             async (params) => {
-                const { slug, questionId, code, langSlug } = params;
-                const csrfToken = document.cookie
+                const { slug, questionId, code, langSlug, csrfTokenFallback } = params;
+                const cookieCsrf = document.cookie
                     .split('; ')
                     .find(row => row.startsWith('csrftoken='))
-                    ?.split('=')[1] || '';
+                    ?.split('=')[1];
+                const csrfToken = cookieCsrf || csrfTokenFallback || '';
 
                 const response = await fetch(`/problems/${slug}/submit/`, {
                     method: 'POST',
@@ -134,6 +147,7 @@ class BrowserSubmitter:
                     "questionId": question_id,
                     "code": code,
                     "langSlug": lang_slug,
+                    "csrfTokenFallback": self.csrf_token,
                 },
             )
 
@@ -219,11 +233,12 @@ class BrowserSubmitter:
 
             run_script = """
             async (params) => {
-                const { slug, questionId, code, testInput, langSlug } = params;
-                const csrfToken = document.cookie
+                const { slug, questionId, code, testInput, langSlug, csrfTokenFallback } = params;
+                const cookieCsrf = document.cookie
                     .split('; ')
                     .find(row => row.startsWith('csrftoken='))
-                    ?.split('=')[1] || '';
+                    ?.split('=')[1];
+                const csrfToken = cookieCsrf || csrfTokenFallback || '';
 
                 const requestOptions = {
                     method: 'POST',
@@ -276,6 +291,7 @@ class BrowserSubmitter:
                     "code": code,
                     "testInput": test_input,
                     "langSlug": lang_slug,
+                    "csrfTokenFallback": self.csrf_token,
                 },
             )
 
