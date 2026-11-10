@@ -82,9 +82,13 @@ class DailySolverPipeline:
             self.attempted_languages.append(language)
             logger.warning("Runtime Error in %s; trying a fresh %s solution.", self.lang, language)
             try:
-                online = self.bulk_db.fetch_online_solution(
-                    slug, detail.get("questionFrontendId", ""), language,
-                    title=detail.get("title"),
+                bulk_db = getattr(self, "bulk_db", None)
+                online = (
+                    bulk_db.fetch_online_solution(
+                        slug, detail.get("questionFrontendId", ""), language,
+                        title=detail.get("title"),
+                    )
+                    if bulk_db else None
                 )
                 if online:
                     candidate = online["code"]
