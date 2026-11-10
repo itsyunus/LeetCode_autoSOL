@@ -74,14 +74,16 @@ class BulkDownloader:
     # ── Index Management ─────────────────────────────────────────────
 
     def _load_index(self):
-        if INDEX_FILE.exists():
-            with open(INDEX_FILE) as f:
+        index_file = self.db_dir / "_master_index.json"
+        if index_file.exists():
+            with open(index_file, encoding="utf-8") as f:
                 self.index = json.load(f)
         else:
             self.index = {}
 
     def _save_index(self):
-        with open(INDEX_FILE, "w") as f:
+        index_file = self.db_dir / "_master_index.json"
+        with open(index_file, "w", encoding="utf-8") as f:
             json.dump(self.index, f, indent=2, sort_keys=True)
         logger.info(f"Index saved: {len(self.index)} solutions indexed")
 
@@ -625,21 +627,103 @@ class BulkDownloader:
 
     # ── Lookup for the Daily Solver ──────────────────────────────────
 
-    def get_solution(self, slug: str) -> Optional[str]:
-        """Look up a pre-downloaded solution by problem slug."""
-        if slug not in self.index:
+    LANGUAGE_EXTENSIONS = {
+        "python3": "py", "cpp": "cpp", "java": "java",
+        "javascript": "js", "typescript": "ts", "go": "go", "rust": "rs",
+    }
+
+    def get_solution(self, slug: str, language: str = "python3") -> Optional[str]:
+        """Look up a cached solution for the requested LeetCode language."""
+        entry = self.index.get(slug)
+        if not entry:
             return None
-
-        entry = self.index[slug]
-        code_file = self.db_dir / entry["file"]
-
+        language_entry = entry.get("languages", {}).get(language)
+        relative_file = language_entry.get("file") if language_entry else None
+        if not relative_file and language == "python3":
+            relative_file = entry.get("file")
+        if not relative_file:
+            return None
+        code_file = self.db_dir / relative_file
         if not code_file.exists():
-            logger.warning(f"Indexed but missing file: {code_file}")
+            logger.warning("Indexed solution file is missing: %s", code_file)
             return None
-
         code = code_file.read_text(encoding="utf-8", errors="ignore")
-        logger.info(f"📦 DB hit: {slug} (source: {entry['source']})")
+        source = language_entry.get("source") if language_entry else entry.get("source", "legacy-db")
+        logger.info("📦 DB hit: %s [%s] from %s", slug, language, source)
         return code
+
+    def fetch_online_solution(
+        self, slug: str, frontend_id: str, language: str = "python3",
+        title: Optional[str] = None,
+    ) -> Optional[dict]:
+        """Fetch one language-specific solution from Doocs on demand and cache it.
+
+        The upstream repository is CC-BY-SA-4.0. Attribution is retained in both
+        the cached source file and index metadata. Candidates still require
+        LeetCode sample validation before submission.
+        """
+        import requests
+        extension = self.LANGUAGE_EXTENSIONS.get(language)
+        if not extension:
+            logger.info("No Doocs extension mapping for language %s", language)
+            return None
+        try:
+            problem_number = int(frontend_id)
+            lower = (problem_number // 100) * 100
+            upper = lower + 99
+            directory = f"solution/{lower:04d}-{upper:04d}"
+            api_url = f"https://api.github.com/repos/doocs/leetcode/contents/{directory}"
+            response = requests.get(api_url, headers={"Accept": "application/vnd.github+json"}, timeout=(5, 15))
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            folders = response.json()
+            prefix = f"{problem_number}."
+            problem_folder = next((item for item in folders if item.get("type") == "dir" and item.get("name", "").startswith(prefix)), None)
+            if not problem_folder or not problem_folder.get("url"):
+                return None
+            folder_response = requests.get(problem_folder["url"], timeout=(5, 15))
+            folder_response.raise_for_status()
+            expected_name = f"Solution.{extension}"
+            source_file = next((item for item in folder_response.json() if item.get("type") == "file" and item.get("name") == expected_name), None)
+            if not source_file or not source_file.get("download_url"):
+                return None
+            code_response = requests.get(source_file["download_url"], timeout=(5, 20))
+            code_response.raise_for_status()
+            code = code_response.text.strip()
+            if not code:
+                return None
+
+            source_url = source_file.get("html_url") or source_file["download_url"]
+            comment_prefix = "#" if extension == "py" else "//"
+            code = (
+                f"{comment_prefix} Source: {source_url}\n"
+                f"{comment_prefix} License: CC-BY-SA-4.0 (Doocs/leetcode)\n" + code
+            )
+            safe_slug = re.sub(r"[^a-z0-9_-]", "_", slug.lower())
+            relative_file = f"code/{safe_slug}.{extension}"
+            code_file = self.db_dir / relative_file
+            code_file.parent.mkdir(parents=True, exist_ok=True)
+            code_file.write_text(code, encoding="utf-8")
+            entry = self.index.setdefault(slug, {
+                "id": str(frontend_id), "title": title or slug.replace("-", " ").title(),
+                "slug": slug, "languages": {},
+            })
+            entry.setdefault("languages", {})[language] = {
+                "file": relative_file, "source": "doocs/leetcode",
+                "source_url": source_url, "license": "CC-BY-SA-4.0",
+                "language": language,
+            }
+            self._save_index()
+            logger.info("🌐 Downloaded and cached %s solution for %s from Doocs", language, slug)
+            return {"code": code, "source": "doocs/leetcode", "source_url": source_url,
+                    "license": "CC-BY-SA-4.0", "language": language}
+        except requests.RequestException as exc:
+            logger.warning("Online solution lookup failed for %s: %s", slug, exc)
+            return None
+        except (ValueError, TypeError, KeyError) as exc:
+            logger.warning("Could not parse Doocs solution for %s: %s", slug, exc)
+            return None
 
     def get_stats(self) -> dict:
         """Return database statistics."""
