@@ -53,6 +53,7 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           python3 << 'PYEOF'
           import os, smtplib, sys
@@ -63,6 +64,7 @@ jobs:
           smtp_user = os.environ.get("SMTP_USER", "")
           smtp_pass = os.environ.get("SMTP_PASSWORD", "")
           to_email = os.environ.get("NOTIFICATION_EMAIL", "")
+          run_num = os.environ.get("RUN_NUMBER", "?")
 
           if not all([smtp_user, smtp_pass, to_email]):
               print("⚠️  Email not configured — skipping alert")
@@ -78,20 +80,21 @@ jobs:
           html = f"""
           <div style="font-family:system-ui;max-width:520px;margin:auto;padding:24px;background:#0d1117;color:#e6edf3;border-radius:16px;border:1px solid #30363d">
             <h2 style="color:#f85149;margin-top:0">🚨 Session Expired</h2>
-            <p>The keep-alive probe at <b>{now}</b> detected that your LeetCode session has expired.</p>
+            <p>The keep-alive probe at <b>{now}</b> detected your LeetCode session has expired.</p>
             <p>The daily auto-solver <b>will fail</b> until you refresh the cookies.</p>
 
             <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;margin:16px 0">
-              <h3 style="color:#58a6ff;margin-top:0">🔧 Fix in 30 seconds:</h3>
+              <h3 style="color:#58a6ff;margin-top:0">Fix in 30 seconds:</h3>
               <ol style="padding-left:20px">
-                <li>Open <a href="https://leetcode.com" style="color:#58a6ff">leetcode.com</a> — log in if needed</li>
-                <li>Click the <b>LeetCode Cookie Pusher</b> extension</li>
-                <li>Click <b>Extract</b> → <b>Push to GitHub</b></li>
+                <li>Open <a href="https://leetcode.com" style="color:#58a6ff">leetcode.com</a> and log in</li>
+                <li>Open DevTools (F12) &gt; Application &gt; Cookies</li>
+                <li>Copy <b>LEETCODE_SESSION</b> and <b>csrftoken</b></li>
+                <li>Update them in <a href="https://github.com/itsyunus/LeetCode_autoSOL/settings/secrets/actions" style="color:#58a6ff">GitHub Secrets</a></li>
               </ol>
             </div>
 
             <p style="color:#8b949e;font-size:12px;margin-bottom:0">
-              Sent by Session Keep-Alive • Run: ${{{{ github.run_number }}}}
+              Sent by Session Keep-Alive — Run #{run_num}
             </p>
           </div>
           """
@@ -118,15 +121,14 @@ jobs:
             if [ "${{ steps.keepalive.outcome }}" = "success" ]; then
               echo "✅ **Session is alive.** Cookies probed and any rotations captured."
             else
-              echo "🚨 **Session is DEAD.** Refresh cookies via the Chrome extension."
+              echo "🚨 **Session is DEAD.** Refresh cookies manually."
               echo ""
               echo "### Quick fix:"
               echo "1. Open [leetcode.com](https://leetcode.com) and log in"
-              echo "2. Click **LeetCode Cookie Pusher** extension"
-              echo "3. Click **Extract** → **Push to GitHub**"
+              echo "2. DevTools → Application → Cookies → copy LEETCODE_SESSION + csrftoken"
+              echo "3. Update in [GitHub Secrets](https://github.com/itsyunus/LeetCode_autoSOL/settings/secrets/actions)"
             fi
             echo ""
             echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
             echo "- Schedule: Every 6 hours (4x/day)"
           } >> "$GITHUB_STEP_SUMMARY"
-
