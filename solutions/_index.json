@@ -17,12 +17,23 @@
         "fallback_from": "python3",
         "sample_validation_passed": true
       }
+    },
+    "minimum-cost-to-acquire-required-items": {
+      "file": "3789_minimum-cost-to-acquire-required-items.py",
+      "question_id": "4147",
+      "title": "Minimum Cost to Acquire Required Items",
+      "difficulty": "Medium",
+      "solved_at": "2026-11-11T12:44:10.315813+00:00",
+      "metadata": {
+        "frontend_id": "3789",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 1,
+    "total": 2,
     "easy": 0,
-    "medium": 0,
+    "medium": 1,
     "hard": 1
   }
 }

@@ -1,6 +1,6 @@
 {
-  "status": "dry_run",
-  "date": "2026-11-11T12:38:01.407314+00:00",
+  "status": "accepted",
+  "date": "2026-11-11T12:43:55.085798+00:00",
   "problem": {
     "id": "3789",
     "title": "Minimum Cost to Acquire Required Items",
@@ -12,7 +12,14 @@
       "Greedy"
     ]
   },
-  "submission": null,
-  "error": null,
-  "solution_code": "# Time:  O(1)\n# Space: O(1)\n\n# math\nclass Solution(object):\n    def minimumCost(self, cost1, cost2, costBoth, need1, need2):\n        \"\"\"\n        :type cost1: int\n        :type cost2: int\n        :type costBoth: int\n        :type need1: int\n        :type need2: int\n        :rtype: int\n        \"\"\"\n        mn = min(need1, need2)\n        mx = max(need1, need2)\n        return mn*min(cost1+cost2, costBoth)+min((need1-mn)*cost1+(need2-mn)*cost2, (mx-mn)*costBoth)\n\n\n# Time:  O(1)\n# Space: O(1)\n# math\nclass Solution2(object):\n    def minimumCost(self, cost1, cost2, costBoth, need1, need2):\n        \"\"\"\n        :type cost1: int\n        :type cost2: int\n        :type costBoth: int\n        :type need1: int\n        :type need2: int\n        :rtype: int\n        \"\"\"\n        mn = min(need1, need2)\n        mx = max(need1, need2)\n        return min(need1*cost1+need2*cost2, mn*costBoth+(need1-mn)*cost1+(need2-mn)*cost2, mx*costBoth)\n"
+  "submission": {
+    "id": 2193868873,
+    "runtime": "1 ms",
+    "memory": "19.3 MB",
+    "runtime_percentile": 35.789500000000004,
+    "memory_percentile": 71.5789,
+    "attempts": 1,
+    "language": "python3"
+  },
+  "error": null
 }
