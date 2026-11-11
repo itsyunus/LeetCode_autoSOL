@@ -116,7 +116,7 @@ class NodriverAuthenticator:
         browser = await uc.start(**start_kwargs)
 
         try:
-            page = await browser.get("https://leetcode.com/accounts/login/")
+            tab = await browser.get("https://leetcode.com/accounts/login/")
 
             # Let Cloudflare challenge resolve naturally
             logger.info("Waiting for Cloudflare challenge to clear...")
@@ -124,9 +124,9 @@ class NodriverAuthenticator:
 
             # Check if we're past Cloudflare
             for attempt in range(5):
-                current_url = page.url or ""
+                current_url = tab.url or ""
                 try:
-                    source = await page.evaluate("document.documentElement.outerHTML")
+                    source = await tab.evaluate("document.documentElement.outerHTML")
                 except Exception:
                     source = ""
                 if "accounts/login" in current_url or "sign-in" in current_url.lower():
@@ -142,6 +142,7 @@ class NodriverAuthenticator:
             await asyncio.sleep(random.uniform(1.5, 3.0))
 
             # ── Find and fill username ──────────────────────────────
+            # nodriver uses tab.select() (CSS) and tab.find() (text content)
             username_input = None
             username_selectors = [
                 'input[name="login"]',
@@ -152,36 +153,59 @@ class NodriverAuthenticator:
             ]
             for selector in username_selectors:
                 try:
-                    username_input = await page.query_selector(selector)
+                    username_input = await asyncio.wait_for(
+                        tab.select(selector), timeout=3
+                    )
                     if username_input:
+                        logger.info(f"Found username field with: {selector}")
                         break
-                except Exception:
+                except (asyncio.TimeoutError, Exception):
                     continue
 
             if not username_input:
-                # Try finding by placeholder text
                 try:
-                    username_input = await page.find("Username or E-mail", best_match=True)
-                except Exception:
+                    username_input = await asyncio.wait_for(
+                        tab.find("Username or E-mail", best_match=True), timeout=3
+                    )
+                    if username_input:
+                        logger.info("Found username field by text content")
+                except (asyncio.TimeoutError, Exception):
+                    pass
+
+            if not username_input:
+                # Last resort: use JS to find and focus the first text input
+                try:
+                    await tab.evaluate("""
+                        const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input:not([type])');
+                        if (inputs.length > 0) inputs[0].focus();
+                    """)
+                    username_input = await asyncio.wait_for(
+                        tab.select("input:focus"), timeout=3
+                    )
+                    if username_input:
+                        logger.info("Found username field via JS focus")
+                except (asyncio.TimeoutError, Exception):
                     pass
 
             if not username_input:
                 try:
-                    source = await page.evaluate("document.documentElement.outerHTML")
+                    source = await tab.evaluate("document.documentElement.outerHTML")
                 except Exception:
                     source = ""
-                logger.error(f"Could not find username field. Page URL: {page.url}")
-                logger.debug(f"Page content (first 2000 chars): {source[:2000]}")
+                logger.error(f"Could not find username field. Page URL: {tab.url}")
+                logger.info(f"Page HTML (first 3000 chars): {source[:3000]}")
                 raise RuntimeError("Username field not found on login page")
 
             # Human-like typing with random delays
             await username_input.click()
             await asyncio.sleep(random.uniform(0.3, 0.7))
             await username_input.clear_input()
+            await asyncio.sleep(random.uniform(0.1, 0.3))
             for char in self.username:
                 await username_input.send_keys(char)
                 await asyncio.sleep(random.uniform(0.03, 0.12))
 
+            logger.info("Username filled")
             await asyncio.sleep(random.uniform(0.5, 1.2))
 
             # ── Find and fill password ──────────────────────────────
@@ -193,16 +217,21 @@ class NodriverAuthenticator:
             ]
             for selector in password_selectors:
                 try:
-                    password_input = await page.query_selector(selector)
+                    password_input = await asyncio.wait_for(
+                        tab.select(selector), timeout=3
+                    )
                     if password_input:
+                        logger.info(f"Found password field with: {selector}")
                         break
-                except Exception:
+                except (asyncio.TimeoutError, Exception):
                     continue
 
             if not password_input:
                 try:
-                    password_input = await page.find("Password", best_match=True)
-                except Exception:
+                    password_input = await asyncio.wait_for(
+                        tab.find("Password", best_match=True), timeout=3
+                    )
+                except (asyncio.TimeoutError, Exception):
                     pass
 
             if not password_input:
@@ -211,9 +240,12 @@ class NodriverAuthenticator:
             await password_input.click()
             await asyncio.sleep(random.uniform(0.2, 0.5))
             await password_input.clear_input()
+            await asyncio.sleep(random.uniform(0.1, 0.3))
             for char in self.password:
                 await password_input.send_keys(char)
                 await asyncio.sleep(random.uniform(0.03, 0.12))
+
+            logger.info("Password filled")
 
             # Human pause before clicking submit
             await asyncio.sleep(random.uniform(1.0, 2.5))
@@ -227,29 +259,36 @@ class NodriverAuthenticator:
             ]
             for selector in submit_selectors:
                 try:
-                    submit_btn = await page.query_selector(selector)
+                    submit_btn = await asyncio.wait_for(
+                        tab.select(selector), timeout=3
+                    )
                     if submit_btn:
+                        logger.info(f"Found submit button with: {selector}")
                         break
-                except Exception:
+                except (asyncio.TimeoutError, Exception):
                     continue
 
             if not submit_btn:
                 try:
-                    submit_btn = await page.find("Sign In", best_match=True)
-                except Exception:
+                    submit_btn = await asyncio.wait_for(
+                        tab.find("Sign In", best_match=True), timeout=3
+                    )
+                except (asyncio.TimeoutError, Exception):
                     pass
 
             if submit_btn:
                 await submit_btn.click()
+                logger.info("Clicked submit button")
             else:
-                # Fallback: press Enter
+                # Fallback: press Enter on the password field
+                logger.info("No submit button found — pressing Enter")
                 await password_input.send_keys("\r")
 
             # Wait for redirect after login
             logger.info("Waiting for login redirect...")
             for i in range(20):
                 await asyncio.sleep(1.5)
-                current_url = page.url or ""
+                current_url = tab.url or ""
                 if "login" not in current_url.lower() and "accounts" not in current_url.lower():
                     logger.info(f"Redirected to: {current_url}")
                     break
@@ -260,37 +299,13 @@ class NodriverAuthenticator:
             await asyncio.sleep(random.uniform(2, 4))
 
             # ── Extract cookies ──────────────────────────────────────
-            # nodriver uses CDP Network.getAllCookies under the hood
-            try:
-                cookies = await browser.cookies.get_all()
-            except Exception:
-                # Fallback: use CDP directly
-                try:
-                    result = await page.send(cdp.network.get_all_cookies())
-                    cookies = result if result else []
-                except Exception:
-                    cookies = []
-
+            logger.info("Extracting cookies...")
             session_token = None
             csrf_token = None
 
-            for cookie in cookies:
-                name = getattr(cookie, 'name', '') or (cookie.get('name', '') if isinstance(cookie, dict) else '')
-                value = getattr(cookie, 'value', '') or (cookie.get('value', '') if isinstance(cookie, dict) else '')
-                if name == "LEETCODE_SESSION":
-                    session_token = value
-                elif name == "csrftoken":
-                    csrf_token = value
-
-            if not session_token:
-                # Try navigating to problemset to trigger cookie set
-                logger.info("No session cookie yet — navigating to problemset...")
-                tab = await browser.get("https://leetcode.com/problemset/")
-                await asyncio.sleep(4)
-                try:
-                    cookies = await browser.cookies.get_all()
-                except Exception:
-                    cookies = []
+            # Method 1: nodriver cookie API
+            try:
+                cookies = await browser.cookies.get_all()
                 for cookie in cookies:
                     name = getattr(cookie, 'name', '') or (cookie.get('name', '') if isinstance(cookie, dict) else '')
                     value = getattr(cookie, 'value', '') or (cookie.get('value', '') if isinstance(cookie, dict) else '')
@@ -298,19 +313,39 @@ class NodriverAuthenticator:
                         session_token = value
                     elif name == "csrftoken":
                         csrf_token = value
+            except Exception as e:
+                logger.warning(f"Cookie API failed: {e}")
 
+            # Method 2: JS document.cookie
             if not session_token:
-                # Last resort: try extracting via JS
                 try:
-                    js_cookies = await page.evaluate("document.cookie")
+                    js_cookies = await tab.evaluate("document.cookie")
+                    logger.info(f"JS cookies (truncated): {js_cookies[:200]}...")
                     for part in js_cookies.split(";"):
                         part = part.strip()
                         if part.startswith("LEETCODE_SESSION="):
                             session_token = part.split("=", 1)[1]
                         elif part.startswith("csrftoken="):
                             csrf_token = part.split("=", 1)[1]
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f"JS cookie extraction failed: {e}")
+
+            # Method 3: Navigate to problemset then retry
+            if not session_token:
+                logger.info("No session cookie yet — navigating to problemset...")
+                try:
+                    await browser.get("https://leetcode.com/problemset/")
+                    await asyncio.sleep(4)
+                    cookies = await browser.cookies.get_all()
+                    for cookie in cookies:
+                        name = getattr(cookie, 'name', '') or (cookie.get('name', '') if isinstance(cookie, dict) else '')
+                        value = getattr(cookie, 'value', '') or (cookie.get('value', '') if isinstance(cookie, dict) else '')
+                        if name == "LEETCODE_SESSION":
+                            session_token = value
+                        elif name == "csrftoken":
+                            csrf_token = value
+                except Exception as e:
+                    logger.warning(f"Problemset cookie extraction failed: {e}")
 
             if not session_token:
                 raise RuntimeError(
