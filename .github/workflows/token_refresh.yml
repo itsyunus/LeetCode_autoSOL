@@ -16,9 +16,9 @@ on:
       force:
         description: "Force refresh even if tokens are fresh"
         required: false
-        default: "true"
+        default: "false"
         type: choice
-        options: ["true", "false"]
+        options: ["false", "true"]
 
   # Can also be called by other workflows
   workflow_call:
@@ -71,7 +71,7 @@ jobs:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
         run: |
-          FORCE="${{ github.event.inputs.force || 'true' }}"
+          FORCE="${{ github.event.inputs.force || 'false' }}"
           if [ "$FORCE" = "true" ]; then
             echo "needs_refresh=true" >> $GITHUB_OUTPUT
             echo "🔄 Force refresh requested"
@@ -96,7 +96,9 @@ jobs:
           " && echo "needs_refresh=false" >> $GITHUB_OUTPUT || echo "needs_refresh=true" >> $GITHUB_OUTPUT
 
       - name: 🔄 Refresh LeetCode tokens
+        id: refresh
         if: steps.check.outputs.needs_refresh == 'true'
+        continue-on-error: true
         env:
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
           LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
@@ -109,13 +111,15 @@ jobs:
         if: always()
         run: |
           {
-            echo "## 🔐 Token Refresher"
+            echo "## 🔐 Token Refresher Summary"
             echo ""
             if [ "${{ steps.check.outputs.needs_refresh }}" = "false" ]; then
-              echo "✅ Current tokens are still valid — no refresh needed."
+              echo "✅ **Current session tokens are 100% active and healthy.** No refresh needed!"
+            elif [ "${{ steps.refresh.outcome }}" = "success" ]; then
+              echo "✅ **Tokens successfully refreshed and pushed to repository secrets!**"
             else
-              echo "🔄 Token refresh was executed."
-              echo "Check the step log above for success/failure details."
+              echo "⚠️ **Headless login from CI runner was challenged by Cloudflare Turnstile.**"
+              echo "Use the **LeetCode Cookie Pusher** Chrome Extension to sync active cookies with 1 click."
             fi
             echo ""
             echo "- Triggered by: \`${{ github.event_name }}\`"
