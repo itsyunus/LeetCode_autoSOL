@@ -216,17 +216,29 @@ class NodriverAuthenticator:
                 logger.info(f"Page HTML (first 3000 chars): {source[:3000]}")
                 raise RuntimeError("Username field not found on login page")
 
-            # Human-like typing with random delays
+            # Fill username using both native keystrokes and React synthetic event setter
             await username_input.click()
-            await asyncio.sleep(random.uniform(0.3, 0.7))
+            await asyncio.sleep(random.uniform(0.2, 0.4))
             await username_input.clear_input()
-            await asyncio.sleep(random.uniform(0.1, 0.3))
             for char in self.username:
                 await username_input.send_keys(char)
-                await asyncio.sleep(random.uniform(0.03, 0.12))
+                await asyncio.sleep(random.uniform(0.02, 0.06))
 
-            logger.info("Username filled")
-            await asyncio.sleep(random.uniform(0.5, 1.2))
+            # Force React 18 / Next.js to register the state update
+            await tab.evaluate(f"""
+                (() => {{
+                    const el = document.querySelector('input[name="login"], #id_login, input[type="text"], input[autocomplete="username"]');
+                    if (el) {{
+                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+                        if (setter) setter.call(el, {json.dumps(self.username)});
+                        else el.value = {json.dumps(self.username)};
+                        el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    }}
+                }})()
+            """)
+            logger.info("Username filled and React state synced")
+            await asyncio.sleep(random.uniform(0.4, 0.8))
 
             # ── Find and fill password ──────────────────────────────
             password_input = None
@@ -258,23 +270,36 @@ class NodriverAuthenticator:
                 raise RuntimeError("Password field not found on login page")
 
             await password_input.click()
-            await asyncio.sleep(random.uniform(0.2, 0.5))
+            await asyncio.sleep(random.uniform(0.2, 0.4))
             await password_input.clear_input()
-            await asyncio.sleep(random.uniform(0.1, 0.3))
             for char in self.password:
                 await password_input.send_keys(char)
-                await asyncio.sleep(random.uniform(0.03, 0.12))
+                await asyncio.sleep(random.uniform(0.02, 0.06))
 
-            logger.info("Password filled")
+            # Force React state sync on password field
+            await tab.evaluate(f"""
+                (() => {{
+                    const el = document.querySelector('input[name="password"], #id_password, input[type="password"]');
+                    if (el) {{
+                        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
+                        if (setter) setter.call(el, {json.dumps(self.password)});
+                        else el.value = {json.dumps(self.password)};
+                        el.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                        el.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                    }}
+                }})()
+            """)
+            logger.info("Password filled and React state synced")
 
-            # Human pause before clicking submit
-            await asyncio.sleep(random.uniform(1.0, 2.5))
+            # Human pause before submitting
+            await asyncio.sleep(random.uniform(1.0, 1.8))
 
-            # ── Click sign-in button ─────────────────────────────────
+            # ── Submit the login form ────────────────────────────────
+            # 1. First attempt: click the submit button
             submit_btn = None
             submit_selectors = [
-                'button[type="submit"]',
                 '#signin_btn',
+                'button[type="submit"]',
                 'button[data-cy="sign-in-btn"]',
             ]
             for selector in submit_selectors:
@@ -288,21 +313,41 @@ class NodriverAuthenticator:
                 except (asyncio.TimeoutError, Exception):
                     continue
 
-            if not submit_btn:
-                try:
-                    submit_btn = await asyncio.wait_for(
-                        tab.find("Sign In", best_match=True), timeout=3
-                    )
-                except (asyncio.TimeoutError, Exception):
-                    pass
+            # Check if button is disabled in DOM and enable it if needed
+            btn_state = await tab.evaluate("""
+                (() => {
+                    const btn = document.querySelector('#signin_btn, button[type="submit"]');
+                    if (!btn) return { exists: false };
+                    return {
+                        exists: true,
+                        disabled: btn.disabled,
+                        innerText: btn.innerText,
+                        classes: btn.className
+                    };
+                })()
+            """)
+            logger.info(f"Submit button state: {btn_state}")
 
             if submit_btn:
                 await submit_btn.click()
-                logger.info("Clicked submit button")
-            else:
-                # Fallback: press Enter on the password field
-                logger.info("No submit button found — pressing Enter")
-                await password_input.send_keys("\r")
+                logger.info("Clicked submit button via nodriver")
+
+            # 2. Also dispatch form submit and press Enter via JavaScript & keyboard
+            await tab.evaluate("""
+                (() => {
+                    const btn = document.querySelector('#signin_btn, button[type="submit"]');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.click();
+                    }
+                    const form = document.querySelector('form');
+                    if (form) {
+                        try { form.requestSubmit(); } catch (e) { form.submit(); }
+                    }
+                })()
+            """)
+            await password_input.send_keys("\r")
+            logger.info("Dispatched form submit and Enter key")
 
             # Wait for redirect after login
             logger.info("Waiting for login redirect...")
@@ -341,6 +386,8 @@ class NodriverAuthenticator:
             # Method 1: nodriver cookie API
             try:
                 cookies = await browser.cookies.get_all()
+                cookie_names = [getattr(c, 'name', '') or (c.get('name', '') if isinstance(c, dict) else '') for c in cookies]
+                logger.info(f"Retrieved {len(cookies)} cookies: {cookie_names}")
                 for cookie in cookies:
                     name = getattr(cookie, 'name', '') or (cookie.get('name', '') if isinstance(cookie, dict) else '')
                     value = getattr(cookie, 'value', '') or (cookie.get('value', '') if isinstance(cookie, dict) else '')
@@ -350,6 +397,21 @@ class NodriverAuthenticator:
                         csrf_token = value
             except Exception as e:
                 logger.warning(f"Cookie API failed: {e}")
+
+            # Method 2: Raw CDP storage/network domain
+            if not session_token and cdp:
+                try:
+                    logger.info("Querying CDP storage.get_cookies directly...")
+                    raw_cookies = await tab.send(cdp.storage.get_cookies())
+                    for c in raw_cookies:
+                        name = getattr(c, 'name', '')
+                        value = getattr(c, 'value', '')
+                        if name == "LEETCODE_SESSION":
+                            session_token = value
+                        elif name == "csrftoken":
+                            csrf_token = value
+                except Exception as e:
+                    logger.warning(f"CDP storage.get_cookies failed: {e}")
 
             # Method 2: JS document.cookie
             if not session_token:
