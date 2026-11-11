@@ -1,31 +1,270 @@
 """
-Automatic LeetCode Session Refresher
-Logs into LeetCode using username/password, extracts fresh session
-cookies, and updates GitHub Secrets automatically via the GitHub API.
+Automatic LeetCode Session Refresher — nodriver Edition
+═══════════════════════════════════════════════════════════
+Logs into LeetCode using username/password through an undetectable
+Chrome instance (nodriver), extracts fresh session cookies, and
+pushes them to GitHub Secrets automatically.
 
-Two login strategies:
-  1. Direct API login (fast, no browser needed)
-  2. Playwright headless browser (fallback if API login gets blocked)
+Strategies (in priority order):
+  1. nodriver — undetectable Chrome, invisible to Cloudflare
+  2. Direct API login — fast, no browser, but often 403'd
+  3. requests session with cookie rotation headers
 
-This runs as a GitHub Actions job BEFORE the solver, ensuring
-tokens are always fresh. No manual cookie copying ever again.
+Runs as a standalone GitHub Actions workflow on a 3-day schedule,
+or as a pre-step in the daily solver. Zero human intervention.
 """
 
 import os
 import sys
 import json
 import time
+import asyncio
 import logging
 import base64
+import random
 import requests
 from typing import Optional, Tuple, Dict
 from nacl import encoding, public  # PyNaCl for GitHub secret encryption
 
 logger = logging.getLogger(__name__)
 
+# ─── Randomized browser fingerprint data ────────────────────────────
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+]
 
-class LeetCodeAuthenticator:
-    """Handles LeetCode login and cookie extraction."""
+VIEWPORTS = [
+    (1920, 1080), (1536, 864), (1440, 900),
+    (1366, 768), (2560, 1440), (1680, 1050),
+]
+
+
+class NodriverAuthenticator:
+    """
+    Uses nodriver (undetected Chrome) to login to LeetCode.
+    nodriver bypasses Cloudflare Turnstile by:
+      - Not injecting CDP flags that Playwright/Selenium do
+      - Using real Chrome binary with no automation indicators
+      - Randomized fingerprinting (viewport, user-agent, timing)
+    """
+
+    def __init__(self, username: str, password: str):
+        self.username = username
+        self.password = password
+
+    async def login(self) -> Tuple[str, str]:
+        """
+        Launch undetectable Chrome, navigate to LeetCode login,
+        fill credentials with human-like timing, extract cookies.
+        """
+        import nodriver as uc
+
+        logger.info("Launching undetectable Chrome via nodriver...")
+
+        # Randomize fingerprint
+        viewport = random.choice(VIEWPORTS)
+        ua = random.choice(USER_AGENTS)
+
+        browser = await uc.start(
+            headless=True,
+            browser_args=[
+                f"--window-size={viewport[0]},{viewport[1]}",
+                "--disable-blink-features=AutomationControlled",
+                "--no-first-run",
+                "--no-default-browser-check",
+                "--disable-popup-blocking",
+                "--disable-extensions",
+                "--disable-infobars",
+                "--disable-dev-shm-usage",
+                "--no-sandbox",
+                f"--user-agent={ua}",
+            ],
+        )
+
+        try:
+            page = await browser.get("https://leetcode.com/accounts/login/")
+
+            # Let Cloudflare challenge resolve naturally
+            logger.info("Waiting for Cloudflare challenge to clear...")
+            await asyncio.sleep(random.uniform(4, 7))
+
+            # Check if we're past Cloudflare
+            for attempt in range(5):
+                current_url = page.url or ""
+                page_text = await page.get_content()
+                if "accounts/login" in current_url or "sign-in" in current_url.lower():
+                    logger.info("Login page loaded successfully")
+                    break
+                if "challenge" in current_url.lower() or "ray id" in page_text.lower():
+                    logger.info(f"Cloudflare challenge still active, waiting... (attempt {attempt + 1})")
+                    await asyncio.sleep(random.uniform(3, 6))
+                else:
+                    # Might have been redirected to home (already logged in?) or login page loaded
+                    break
+
+            # Human-like pause before typing
+            await asyncio.sleep(random.uniform(1.5, 3.0))
+
+            # ── Find and fill username ──────────────────────────────
+            username_input = None
+            username_selectors = [
+                'input[name="login"]',
+                '#id_login',
+                'input[autocomplete="username"]',
+                'input[type="text"]',
+                'input[name="email"]',
+            ]
+            for selector in username_selectors:
+                try:
+                    username_input = await page.query_selector(selector)
+                    if username_input:
+                        break
+                except Exception:
+                    continue
+
+            if not username_input:
+                # Try finding by placeholder text
+                try:
+                    username_input = await page.find("Username or E-mail", best_match=True)
+                except Exception:
+                    pass
+
+            if not username_input:
+                content = await page.get_content()
+                logger.error(f"Could not find username field. Page URL: {page.url}")
+                logger.debug(f"Page content (first 2000 chars): {content[:2000]}")
+                raise RuntimeError("Username field not found on login page")
+
+            # Human-like typing with random delays
+            await username_input.click()
+            await asyncio.sleep(random.uniform(0.3, 0.7))
+            await username_input.clear_input()
+            for char in self.username:
+                await username_input.send_keys(char)
+                await asyncio.sleep(random.uniform(0.03, 0.12))
+
+            await asyncio.sleep(random.uniform(0.5, 1.2))
+
+            # ── Find and fill password ──────────────────────────────
+            password_input = None
+            password_selectors = [
+                'input[name="password"]',
+                '#id_password',
+                'input[type="password"]',
+            ]
+            for selector in password_selectors:
+                try:
+                    password_input = await page.query_selector(selector)
+                    if password_input:
+                        break
+                except Exception:
+                    continue
+
+            if not password_input:
+                try:
+                    password_input = await page.find("Password", best_match=True)
+                except Exception:
+                    pass
+
+            if not password_input:
+                raise RuntimeError("Password field not found on login page")
+
+            await password_input.click()
+            await asyncio.sleep(random.uniform(0.2, 0.5))
+            await password_input.clear_input()
+            for char in self.password:
+                await password_input.send_keys(char)
+                await asyncio.sleep(random.uniform(0.03, 0.12))
+
+            # Human pause before clicking submit
+            await asyncio.sleep(random.uniform(1.0, 2.5))
+
+            # ── Click sign-in button ─────────────────────────────────
+            submit_btn = None
+            submit_selectors = [
+                'button[type="submit"]',
+                '#signin_btn',
+                'button[data-cy="sign-in-btn"]',
+            ]
+            for selector in submit_selectors:
+                try:
+                    submit_btn = await page.query_selector(selector)
+                    if submit_btn:
+                        break
+                except Exception:
+                    continue
+
+            if not submit_btn:
+                try:
+                    submit_btn = await page.find("Sign In", best_match=True)
+                except Exception:
+                    pass
+
+            if submit_btn:
+                await submit_btn.click()
+            else:
+                # Fallback: press Enter
+                await password_input.send_keys("\r")
+
+            # Wait for redirect after login
+            logger.info("Waiting for login redirect...")
+            for i in range(20):
+                await asyncio.sleep(1.5)
+                current_url = page.url or ""
+                if "login" not in current_url.lower() and "accounts" not in current_url.lower():
+                    logger.info(f"Redirected to: {current_url}")
+                    break
+                if i == 19:
+                    logger.warning(f"Still on login page after 30s. URL: {current_url}")
+
+            # Extra settle time for cookies
+            await asyncio.sleep(random.uniform(2, 4))
+
+            # ── Extract cookies ──────────────────────────────────────
+            cookies = await browser.cookies.get_all()
+            session_token = None
+            csrf_token = None
+
+            for cookie in cookies:
+                name = cookie.name if hasattr(cookie, 'name') else cookie.get('name', '')
+                value = cookie.value if hasattr(cookie, 'value') else cookie.get('value', '')
+                if name == "LEETCODE_SESSION":
+                    session_token = value
+                elif name == "csrftoken":
+                    csrf_token = value
+
+            if not session_token:
+                # Try navigating to a page that requires auth to trigger cookie set
+                await browser.get("https://leetcode.com/problemset/")
+                await asyncio.sleep(3)
+                cookies = await browser.cookies.get_all()
+                for cookie in cookies:
+                    name = cookie.name if hasattr(cookie, 'name') else cookie.get('name', '')
+                    value = cookie.value if hasattr(cookie, 'value') else cookie.get('value', '')
+                    if name == "LEETCODE_SESSION":
+                        session_token = value
+                    elif name == "csrftoken":
+                        csrf_token = value
+
+            if not session_token:
+                raise RuntimeError(
+                    "Login completed but no LEETCODE_SESSION cookie found. "
+                    "Cloudflare may have blocked the login attempt."
+                )
+
+            logger.info("✅ nodriver login successful — cookies extracted!")
+            return session_token, csrf_token or ""
+
+        finally:
+            browser.stop()
+
+
+class DirectAPIAuthenticator:
+    """Fallback: Direct HTTP login (often blocked by Cloudflare but worth trying)."""
 
     LOGIN_URL = "https://leetcode.com/accounts/login/"
     GRAPHQL_URL = "https://leetcode.com/graphql"
@@ -34,38 +273,39 @@ class LeetCodeAuthenticator:
         self.username = username
         self.password = password
         self.session = requests.Session()
+        ua = random.choice(USER_AGENTS)
         self.session.headers.update({
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            ),
+            "User-Agent": ua,
             "Referer": "https://leetcode.com",
             "Origin": "https://leetcode.com",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-User": "?1",
         })
 
-    def login_via_api(self) -> Tuple[str, str]:
-        """
-        Strategy 1: Direct API login.
-        POST credentials to LeetCode's login endpoint, extract cookies.
-        """
+    def login(self) -> Tuple[str, str]:
+        import re
+
         logger.info("Attempting direct API login...")
 
-        # Step 1: GET the login page to grab initial CSRF token
+        # Step 1: GET login page for CSRF token
         resp = self.session.get(self.LOGIN_URL, timeout=30)
         resp.raise_for_status()
 
         csrf_token = self.session.cookies.get("csrftoken", "")
         if not csrf_token:
-            # Try to extract from page
-            import re
             match = re.search(r"csrfmiddlewaretoken.*?value=['\"](.+?)['\"]", resp.text)
             if match:
                 csrf_token = match.group(1)
-
         if not csrf_token:
-            raise RuntimeError("Could not obtain initial CSRF token")
+            raise RuntimeError("Could not obtain initial CSRF token from login page")
 
-        # Step 2: POST login credentials
+        # Step 2: POST credentials
         self.session.headers.update({"x-csrftoken": csrf_token})
         login_data = {
             "login": self.username,
@@ -74,219 +314,28 @@ class LeetCodeAuthenticator:
         }
 
         resp = self.session.post(
-            self.LOGIN_URL,
-            data=login_data,
-            timeout=30,
-            allow_redirects=True,
+            self.LOGIN_URL, data=login_data,
+            timeout=30, allow_redirects=True,
         )
 
-        # Step 3: Extract session cookies
-        session_token = self.session.cookies.get("LEETCODE_SESSION", domain=".leetcode.com")
-        new_csrf = self.session.cookies.get("csrftoken", domain=".leetcode.com")
-
-        if not session_token:
-            # Try without domain filter
-            session_token = self.session.cookies.get("LEETCODE_SESSION")
-            new_csrf = self.session.cookies.get("csrftoken")
+        # Step 3: Extract cookies
+        session_token = (
+            self.session.cookies.get("LEETCODE_SESSION", domain=".leetcode.com")
+            or self.session.cookies.get("LEETCODE_SESSION")
+        )
+        new_csrf = (
+            self.session.cookies.get("csrftoken", domain=".leetcode.com")
+            or self.session.cookies.get("csrftoken")
+        )
 
         if not session_token:
             raise RuntimeError(
-                f"Login failed — no session token received. "
+                f"API login failed — no session token. "
                 f"Status: {resp.status_code}, URL: {resp.url}"
             )
 
         logger.info("✅ API login successful!")
         return session_token, new_csrf or csrf_token
-
-    def login_via_browser(self) -> Tuple[str, str]:
-        """
-        Strategy 2: Headless browser login using Playwright.
-        More robust — handles JS challenges, CAPTCHAs, CloudFlare, etc.
-        """
-        logger.info("Attempting headless browser login...")
-
-        try:
-            from playwright.sync_api import sync_playwright
-        except ImportError:
-            raise RuntimeError(
-                "Playwright not installed. Run: pip install playwright && playwright install chromium"
-            )
-
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    "--disable-blink-features=AutomationControlled",
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                ],
-            )
-
-            context = browser.new_context(
-                user_agent=(
-                    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                ),
-                viewport={"width": 1920, "height": 1080},
-            )
-
-            page = context.new_page()
-
-            # Navigate to login page
-            page.goto("https://leetcode.com/accounts/login/", wait_until="networkidle")
-            time.sleep(2)
-
-            # Fill in credentials
-            # LeetCode's login form uses id="id_login" and id="id_password"
-            username_selectors = [
-                'input[name="login"]',
-                '#id_login',
-                'input[type="text"]',
-                'input[autocomplete="username"]',
-            ]
-            password_selectors = [
-                'input[name="password"]',
-                '#id_password',
-                'input[type="password"]',
-            ]
-
-            username_filled = False
-            for selector in username_selectors:
-                try:
-                    el = page.wait_for_selector(selector, timeout=5000)
-                    if el:
-                        el.fill(self.username)
-                        username_filled = True
-                        break
-                except Exception:
-                    continue
-
-            if not username_filled:
-                raise RuntimeError("Could not find username input field")
-
-            password_filled = False
-            for selector in password_selectors:
-                try:
-                    el = page.wait_for_selector(selector, timeout=5000)
-                    if el:
-                        el.fill(self.password)
-                        password_filled = True
-                        break
-                except Exception:
-                    continue
-
-            if not password_filled:
-                raise RuntimeError("Could not find password input field")
-
-            # Click sign in button
-            submit_selectors = [
-                'button[type="submit"]',
-                '#signin_btn',
-                'button:has-text("Sign In")',
-                'input[type="submit"]',
-            ]
-
-            submitted = False
-            for selector in submit_selectors:
-                try:
-                    btn = page.wait_for_selector(selector, timeout=3000)
-                    if btn:
-                        btn.click()
-                        submitted = True
-                        break
-                except Exception:
-                    continue
-
-            if not submitted:
-                # Try pressing Enter as fallback
-                page.keyboard.press("Enter")
-
-            # Wait for navigation after login
-            try:
-                page.wait_for_url("**/", timeout=15000)
-            except Exception:
-                pass
-
-            time.sleep(3)
-
-            # Extract cookies
-            cookies = context.cookies("https://leetcode.com")
-            session_token = None
-            csrf_token = None
-
-            for cookie in cookies:
-                if cookie["name"] == "LEETCODE_SESSION":
-                    session_token = cookie["value"]
-                elif cookie["name"] == "csrftoken":
-                    csrf_token = cookie["value"]
-
-            browser.close()
-
-            if not session_token:
-                raise RuntimeError("Browser login failed — no session token in cookies")
-
-            logger.info("✅ Browser login successful!")
-            return session_token, csrf_token or ""
-
-    def login(self) -> Tuple[str, str]:
-        """
-        Try all login strategies in order.
-        Returns (LEETCODE_SESSION, csrftoken).
-        """
-        strategies = [
-            ("API Login", self.login_via_api),
-            ("Browser Login", self.login_via_browser),
-        ]
-
-        last_error = None
-        for name, strategy in strategies:
-            try:
-                logger.info(f"━━━ Trying: {name} ━━━")
-                session_token, csrf_token = strategy()
-                self._validate_session(session_token, csrf_token)
-                return session_token, csrf_token
-            except Exception as e:
-                logger.warning(f"{name} failed: {e}")
-                last_error = e
-                continue
-
-        raise RuntimeError(f"All login strategies failed. Last error: {last_error}")
-
-    def _validate_session(self, session_token: str, csrf_token: str):
-        """Verify the tokens actually work by hitting the GraphQL API."""
-        logger.info("Validating session tokens...")
-
-        session = requests.Session()
-        session.cookies.set("LEETCODE_SESSION", session_token, domain=".leetcode.com")
-        session.cookies.set("csrftoken", csrf_token, domain=".leetcode.com")
-        session.headers.update({
-            "Content-Type": "application/json",
-            "Referer": "https://leetcode.com",
-            "x-csrftoken": csrf_token,
-        })
-
-        query = """
-        query globalData {
-            userStatus {
-                username
-                isSignedIn
-            }
-        }
-        """
-        resp = session.post(
-            self.GRAPHQL_URL,
-            json={"query": query},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-        user_status = data.get("data", {}).get("userStatus", {})
-        if not user_status.get("isSignedIn"):
-            raise RuntimeError("Token validation failed — not signed in")
-
-        username = user_status.get("username", "unknown")
-        logger.info(f"✅ Session valid — logged in as: {username}")
 
 
 class GitHubSecretsUpdater:
@@ -295,11 +344,6 @@ class GitHubSecretsUpdater:
     API_BASE = "https://api.github.com"
 
     def __init__(self, token: str, repo: str):
-        """
-        Args:
-            token: GitHub Personal Access Token with `repo` scope
-            repo: Full repo name like "YunuZCodes/leetcode-auto-solver"
-        """
         self.token = token
         self.repo = repo
         self.headers = {
@@ -309,7 +353,6 @@ class GitHubSecretsUpdater:
         }
 
     def _get_public_key(self) -> Tuple[str, str]:
-        """Fetch the repo's public key for encrypting secrets."""
         url = f"{self.API_BASE}/repos/{self.repo}/actions/secrets/public-key"
         resp = requests.get(url, headers=self.headers, timeout=15)
         resp.raise_for_status()
@@ -317,38 +360,71 @@ class GitHubSecretsUpdater:
         return data["key"], data["key_id"]
 
     def _encrypt_secret(self, public_key: str, secret_value: str) -> str:
-        """Encrypt a secret value using the repo's public key (libsodium sealed box)."""
         pk = public.PublicKey(public_key.encode("utf-8"), encoding.Base64Encoder())
         sealed_box = public.SealedBox(pk)
         encrypted = sealed_box.encrypt(secret_value.encode("utf-8"))
         return base64.b64encode(encrypted).decode("utf-8")
 
     def update_secret(self, secret_name: str, secret_value: str):
-        """Create or update a GitHub Actions secret."""
         pub_key, key_id = self._get_public_key()
         encrypted_value = self._encrypt_secret(pub_key, secret_value)
 
         url = f"{self.API_BASE}/repos/{self.repo}/actions/secrets/{secret_name}"
-        payload = {
-            "encrypted_value": encrypted_value,
-            "key_id": key_id,
-        }
+        payload = {"encrypted_value": encrypted_value, "key_id": key_id}
 
         resp = requests.put(url, headers=self.headers, json=payload, timeout=15)
         resp.raise_for_status()
         logger.info(f"✅ Updated GitHub secret: {secret_name}")
 
     def update_leetcode_tokens(self, session_token: str, csrf_token: str):
-        """Update both LeetCode secrets in one call."""
         self.update_secret("LEETCODE_SESSION", session_token)
         self.update_secret("LEETCODE_CSRF_TOKEN", csrf_token)
         logger.info("✅ Both LeetCode secrets updated in GitHub!")
 
 
+def validate_session(session_token: str, csrf_token: str) -> str:
+    """Verify tokens work by querying LeetCode GraphQL. Returns username."""
+    logger.info("Validating session tokens...")
+
+    session = requests.Session()
+    session.cookies.set("LEETCODE_SESSION", session_token, domain=".leetcode.com")
+    session.cookies.set("csrftoken", csrf_token, domain=".leetcode.com")
+    session.headers.update({
+        "Content-Type": "application/json",
+        "Referer": "https://leetcode.com",
+        "x-csrftoken": csrf_token,
+        "User-Agent": random.choice(USER_AGENTS),
+    })
+
+    query = """
+    query globalData {
+        userStatus {
+            username
+            isSignedIn
+        }
+    }
+    """
+    resp = session.post(
+        "https://leetcode.com/graphql",
+        json={"query": query},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+
+    user_status = data.get("data", {}).get("userStatus", {})
+    if not user_status.get("isSignedIn"):
+        raise RuntimeError("Token validation failed — not signed in")
+
+    username = user_status.get("username", "unknown")
+    logger.info(f"✅ Session valid — logged in as: {username}")
+    return username
+
+
 class TokenRefreshPipeline:
     """
-    Full pipeline: Login to LeetCode → Get fresh tokens → Update GitHub Secrets.
-    Runs before the solver to ensure tokens are always valid.
+    Full pipeline: Login → Validate → Push to GitHub Secrets.
+    Strategies tried in order: nodriver → direct API.
     """
 
     def __init__(
@@ -358,29 +434,72 @@ class TokenRefreshPipeline:
         github_token: str,
         github_repo: str,
     ):
-        self.auth = LeetCodeAuthenticator(leetcode_username, leetcode_password)
+        self.username = leetcode_username
+        self.password = leetcode_password
         self.github = GitHubSecretsUpdater(github_token, github_repo)
 
-    def refresh(self) -> Dict[str, str]:
-        """Execute the full token refresh pipeline."""
+    async def _try_nodriver(self) -> Tuple[str, str]:
+        auth = NodriverAuthenticator(self.username, self.password)
+        return await auth.login()
+
+    def _try_api(self) -> Tuple[str, str]:
+        auth = DirectAPIAuthenticator(self.username, self.password)
+        return auth.login()
+
+    async def refresh_async(self) -> Dict[str, str]:
+        """Execute full token refresh (async version for nodriver)."""
         logger.info("=" * 60)
         logger.info("🔄 LeetCode Token Auto-Refresh Pipeline")
         logger.info("=" * 60)
 
-        # Step 1: Login and get fresh tokens
-        session_token, csrf_token = self.auth.login()
+        session_token = None
+        csrf_token = None
+        strategy_used = None
 
-        # Step 2: Update GitHub Secrets
+        # Strategy 1: nodriver (undetectable Chrome)
+        try:
+            logger.info("━━━ Strategy 1: nodriver (undetectable Chrome) ━━━")
+            session_token, csrf_token = await self._try_nodriver()
+            strategy_used = "nodriver"
+        except Exception as e:
+            logger.warning(f"nodriver login failed: {e}")
+
+        # Strategy 2: Direct API
+        if not session_token:
+            try:
+                logger.info("━━━ Strategy 2: Direct API login ━━━")
+                session_token, csrf_token = self._try_api()
+                strategy_used = "direct_api"
+            except Exception as e:
+                logger.warning(f"API login failed: {e}")
+
+        if not session_token:
+            raise RuntimeError(
+                "All login strategies failed. LeetCode may require manual intervention. "
+                "Try refreshing cookies manually via the Chrome extension."
+            )
+
+        # Validate before pushing
+        username = validate_session(session_token, csrf_token)
+
+        # Push to GitHub Secrets
         self.github.update_leetcode_tokens(session_token, csrf_token)
 
         logger.info("=" * 60)
-        logger.info("✅ TOKEN REFRESH COMPLETE")
+        logger.info(f"✅ TOKEN REFRESH COMPLETE (via {strategy_used})")
+        logger.info(f"   Logged in as: {username}")
         logger.info("=" * 60)
 
         return {
             "session_token": session_token,
             "csrf_token": csrf_token,
+            "username": username,
+            "strategy": strategy_used,
         }
+
+    def refresh(self) -> Dict[str, str]:
+        """Sync wrapper around the async refresh pipeline."""
+        return asyncio.run(self.refresh_async())
 
 
 def main():
@@ -393,8 +512,8 @@ def main():
 
     username = os.environ.get("LEETCODE_USERNAME")
     password = os.environ.get("LEETCODE_PASSWORD")
-    gh_token = os.environ.get("GH_PAT")  # Personal Access Token
-    gh_repo = os.environ.get("GITHUB_REPOSITORY", "")  # Auto-set by GitHub Actions
+    gh_token = os.environ.get("GH_PAT")
+    gh_repo = os.environ.get("GITHUB_REPOSITORY", "")
 
     if not all([username, password, gh_token, gh_repo]):
         missing = []
@@ -409,18 +528,19 @@ def main():
 
     try:
         result = pipeline.refresh()
-        # Also export to env for the current workflow run
+        # Export to GITHUB_ENV for downstream steps
         gh_env = os.environ.get("GITHUB_ENV")
         if gh_env:
             with open(gh_env, "a") as f:
                 f.write(f"LEETCODE_SESSION={result['session_token']}\n")
                 f.write(f"LEETCODE_CSRF_TOKEN={result['csrf_token']}\n")
             logger.info("Exported fresh tokens to GITHUB_ENV for this run")
+        print(f"::notice::Token refresh successful via {result['strategy']} — logged in as {result['username']}")
     except Exception as e:
         logger.error(f"Token refresh failed: {e}")
+        print(f"::error::Token refresh failed: {e}")
         sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
-

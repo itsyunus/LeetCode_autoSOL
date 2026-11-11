@@ -1,0 +1,122 @@
+# ─────────────────────────────────────────────────────────────
+# GitHub Actions: LeetCode Token Auto-Refresher
+# Runs every 3 days + before the daily solver to keep cookies alive.
+# Uses nodriver (undetectable Chrome) to bypass Cloudflare.
+# ─────────────────────────────────────────────────────────────
+
+name: 🔄 LeetCode Token Refresher
+
+on:
+  schedule:
+    # Every 3 days at 00:00 UTC (well before daily solver at 00:30)
+    - cron: "0 0 */3 * *"
+
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force refresh even if tokens are fresh"
+        required: false
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+
+  # Can also be called by other workflows
+  workflow_call:
+    secrets:
+      LEETCODE_USERNAME:
+        required: true
+      LEETCODE_PASSWORD:
+        required: true
+      GH_PAT:
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-tokens:
+    name: 🔐 Refresh LeetCode Session
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests PyNaCl nodriver
+          # nodriver uses system Chrome — install it
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq google-chrome-stable 2>/dev/null || {
+            # If Chrome not in default repos, add Google's repo
+            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq google-chrome-stable
+          }
+          google-chrome --version || true
+
+      - name: 🔐 Check if refresh needed
+        id: check
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+        run: |
+          FORCE="${{ github.event.inputs.force || 'true' }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "needs_refresh=true" >> $GITHUB_OUTPUT
+            echo "🔄 Force refresh requested"
+            exit 0
+          fi
+
+          # Quick validation — if current tokens work, skip
+          python3 -c "
+          import requests, os, sys
+          s = requests.Session()
+          s.cookies.set('LEETCODE_SESSION', os.environ.get('LEETCODE_SESSION',''), domain='.leetcode.com')
+          s.cookies.set('csrftoken', os.environ.get('LEETCODE_CSRF_TOKEN',''), domain='.leetcode.com')
+          s.headers.update({'Content-Type':'application/json','Referer':'https://leetcode.com','x-csrftoken':os.environ.get('LEETCODE_CSRF_TOKEN','')})
+          try:
+              r = s.post('https://leetcode.com/graphql', json={'query':'query{userStatus{isSignedIn username}}'}, timeout=15)
+              d = r.json()
+              if d.get('data',{}).get('userStatus',{}).get('isSignedIn'):
+                  print(f\"✅ Current session still valid — {d['data']['userStatus']['username']}\")
+                  sys.exit(0)
+          except: pass
+          sys.exit(1)
+          " && echo "needs_refresh=false" >> $GITHUB_OUTPUT || echo "needs_refresh=true" >> $GITHUB_OUTPUT
+
+      - name: 🔄 Refresh LeetCode tokens
+        if: steps.check.outputs.needs_refresh == 'true'
+        env:
+          LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
+          LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python -m src.token_refresher
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          {
+            echo "## 🔐 Token Refresher"
+            echo ""
+            if [ "${{ steps.check.outputs.needs_refresh }}" = "false" ]; then
+              echo "✅ Current tokens are still valid — no refresh needed."
+            else
+              echo "🔄 Token refresh was executed."
+              echo "Check the step log above for success/failure details."
+            fi
+            echo ""
+            echo "- Triggered by: \`${{ github.event_name }}\`"
+            echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          } >> "$GITHUB_STEP_SUMMARY"
