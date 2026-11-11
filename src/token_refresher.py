@@ -26,6 +26,11 @@ import requests
 from typing import Optional, Tuple, Dict
 from nacl import encoding, public  # PyNaCl for GitHub secret encryption
 
+try:
+    import nodriver.cdp as cdp
+except ImportError:
+    cdp = None
+
 logger = logging.getLogger(__name__)
 
 # ─── Randomized browser fingerprint data ────────────────────────────
@@ -71,6 +76,7 @@ class NodriverAuthenticator:
 
         browser = await uc.start(
             headless=True,
+            sandbox=False,  # Required for GitHub Actions (runs as root-like)
             browser_args=[
                 f"--window-size={viewport[0]},{viewport[1]}",
                 "--disable-blink-features=AutomationControlled",
@@ -81,6 +87,9 @@ class NodriverAuthenticator:
                 "--disable-infobars",
                 "--disable-dev-shm-usage",
                 "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-gpu",
+                "--disable-software-rasterizer",
                 f"--user-agent={ua}",
             ],
         )
@@ -95,15 +104,17 @@ class NodriverAuthenticator:
             # Check if we're past Cloudflare
             for attempt in range(5):
                 current_url = page.url or ""
-                page_text = await page.get_content()
+                try:
+                    source = await page.evaluate("document.documentElement.outerHTML")
+                except Exception:
+                    source = ""
                 if "accounts/login" in current_url or "sign-in" in current_url.lower():
                     logger.info("Login page loaded successfully")
                     break
-                if "challenge" in current_url.lower() or "ray id" in page_text.lower():
+                if "challenge" in current_url.lower() or "ray id" in source.lower():
                     logger.info(f"Cloudflare challenge still active, waiting... (attempt {attempt + 1})")
                     await asyncio.sleep(random.uniform(3, 6))
                 else:
-                    # Might have been redirected to home (already logged in?) or login page loaded
                     break
 
             # Human-like pause before typing
@@ -134,9 +145,12 @@ class NodriverAuthenticator:
                     pass
 
             if not username_input:
-                content = await page.get_content()
+                try:
+                    source = await page.evaluate("document.documentElement.outerHTML")
+                except Exception:
+                    source = ""
                 logger.error(f"Could not find username field. Page URL: {page.url}")
-                logger.debug(f"Page content (first 2000 chars): {content[:2000]}")
+                logger.debug(f"Page content (first 2000 chars): {source[:2000]}")
                 raise RuntimeError("Username field not found on login page")
 
             # Human-like typing with random delays
@@ -225,30 +239,57 @@ class NodriverAuthenticator:
             await asyncio.sleep(random.uniform(2, 4))
 
             # ── Extract cookies ──────────────────────────────────────
-            cookies = await browser.cookies.get_all()
+            # nodriver uses CDP Network.getAllCookies under the hood
+            try:
+                cookies = await browser.cookies.get_all()
+            except Exception:
+                # Fallback: use CDP directly
+                try:
+                    result = await page.send(cdp.network.get_all_cookies())
+                    cookies = result if result else []
+                except Exception:
+                    cookies = []
+
             session_token = None
             csrf_token = None
 
             for cookie in cookies:
-                name = cookie.name if hasattr(cookie, 'name') else cookie.get('name', '')
-                value = cookie.value if hasattr(cookie, 'value') else cookie.get('value', '')
+                name = getattr(cookie, 'name', '') or (cookie.get('name', '') if isinstance(cookie, dict) else '')
+                value = getattr(cookie, 'value', '') or (cookie.get('value', '') if isinstance(cookie, dict) else '')
                 if name == "LEETCODE_SESSION":
                     session_token = value
                 elif name == "csrftoken":
                     csrf_token = value
 
             if not session_token:
-                # Try navigating to a page that requires auth to trigger cookie set
-                await browser.get("https://leetcode.com/problemset/")
-                await asyncio.sleep(3)
-                cookies = await browser.cookies.get_all()
+                # Try navigating to problemset to trigger cookie set
+                logger.info("No session cookie yet — navigating to problemset...")
+                tab = await browser.get("https://leetcode.com/problemset/")
+                await asyncio.sleep(4)
+                try:
+                    cookies = await browser.cookies.get_all()
+                except Exception:
+                    cookies = []
                 for cookie in cookies:
-                    name = cookie.name if hasattr(cookie, 'name') else cookie.get('name', '')
-                    value = cookie.value if hasattr(cookie, 'value') else cookie.get('value', '')
+                    name = getattr(cookie, 'name', '') or (cookie.get('name', '') if isinstance(cookie, dict) else '')
+                    value = getattr(cookie, 'value', '') or (cookie.get('value', '') if isinstance(cookie, dict) else '')
                     if name == "LEETCODE_SESSION":
                         session_token = value
                     elif name == "csrftoken":
                         csrf_token = value
+
+            if not session_token:
+                # Last resort: try extracting via JS
+                try:
+                    js_cookies = await page.evaluate("document.cookie")
+                    for part in js_cookies.split(";"):
+                        part = part.strip()
+                        if part.startswith("LEETCODE_SESSION="):
+                            session_token = part.split("=", 1)[1]
+                        elif part.startswith("csrftoken="):
+                            csrf_token = part.split("=", 1)[1]
+                except Exception:
+                    pass
 
             if not session_token:
                 raise RuntimeError(
@@ -499,7 +540,20 @@ class TokenRefreshPipeline:
 
     def refresh(self) -> Dict[str, str]:
         """Sync wrapper around the async refresh pipeline."""
-        return asyncio.run(self.refresh_async())
+        # Use a fresh event loop to avoid 'Event loop is closed' errors
+        # when nodriver's browser subprocess cleanup races with loop shutdown.
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(self.refresh_async())
+        finally:
+            # Graceful shutdown: cancel remaining tasks, then close
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
 
 def main():
