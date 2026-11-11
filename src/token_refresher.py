@@ -91,9 +91,12 @@ class NodriverAuthenticator:
 
         logger.info(f"Using Chrome binary: {chrome_path or 'auto-detect'}")
 
-        start_kwargs = dict(
+        # Use Config object for better control over connection retries
+        config = uc.Config(
             headless=True,
             sandbox=False,
+            browser_connection_max_tries=15,   # More retries for slow CI runners
+            browser_connection_timeout=5,       # Seconds per retry
             browser_args=[
                 f"--window-size={viewport[0]},{viewport[1]}",
                 "--disable-blink-features=AutomationControlled",
@@ -107,13 +110,30 @@ class NodriverAuthenticator:
                 "--disable-setuid-sandbox",
                 "--disable-gpu",
                 "--disable-software-rasterizer",
+                "--no-zygote",
                 f"--user-agent={ua}",
             ],
         )
         if chrome_path:
-            start_kwargs["browser_executable_path"] = chrome_path
+            config.browser_executable_path = chrome_path
 
-        browser = await uc.start(**start_kwargs)
+        # Retry browser launch — CI runners can be flaky
+        browser = None
+        for attempt in range(3):
+            try:
+                logger.info(f"Browser launch attempt {attempt + 1}/3...")
+                browser = await uc.Browser.create(config=config)
+                logger.info("Browser connected successfully!")
+                break
+            except Exception as e:
+                logger.warning(f"Launch attempt {attempt + 1} failed: {e}")
+                if attempt < 2:
+                    await asyncio.sleep(3)
+                else:
+                    raise
+
+        if not browser:
+            raise RuntimeError("Failed to launch Chrome after 3 attempts")
 
         try:
             tab = await browser.get("https://leetcode.com/accounts/login/")
