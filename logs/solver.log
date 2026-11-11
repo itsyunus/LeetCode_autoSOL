@@ -301,3 +301,21 @@ RuntimeError: Run returned 403
 2026-11-11 12:30:34,149 [INFO] src.bulk_downloader: 📦 DB hit: minimum-cost-to-acquire-required-items (source: kamyu104/LeetCode-Solutions)
 2026-11-11 12:30:34,149 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
 2026-11-11 12:30:34,150 [INFO] leetcode-auto-solver: DRY RUN — skipping submission
+2026-11-11 12:37:58,183 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-11 12:37:58,183 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-11 12:37:58,184 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-11 12:37:58,185 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-11 12:37:58,186 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-11 12:37:58,206 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-11 12:37:58,207 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-11 12:37:58,208 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-11 12:37:58,208 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-11 12:38:01,407 [INFO] leetcode-auto-solver: ============================================================
+2026-11-11 12:38:01,407 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-11 12:38:01,407 [INFO] leetcode-auto-solver: ============================================================
+2026-11-11 12:38:01,676 [INFO] src.leetcode_api: Daily challenge: [3789] Minimum Cost to Acquire Required Items (Medium)
+2026-11-11 12:38:01,676 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3789] Minimum Cost to Acquire Required Items (Medium)
+2026-11-11 12:38:01,958 [INFO] src.leetcode_api: Fetched details for: Minimum Cost to Acquire Required Items
+2026-11-11 12:38:01,959 [INFO] src.bulk_downloader: 📦 DB hit: minimum-cost-to-acquire-required-items [python3] from kamyu104/LeetCode-Solutions
+2026-11-11 12:38:01,959 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-11 12:38:01,960 [INFO] leetcode-auto-solver: DRY RUN — skipping submission
