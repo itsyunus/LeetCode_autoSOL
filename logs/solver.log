@@ -287,3 +287,17 @@ Traceback (most recent call last):
   File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/browser_submitter.py", line 283, in run_code
     raise RuntimeError(f"Run returned {result['status']}")
 RuntimeError: Run returned 403
+2026-11-11 12:30:30,912 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-11 12:30:30,932 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-11 12:30:30,933 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-11 12:30:30,934 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-11 12:30:30,934 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-11 12:30:33,585 [INFO] leetcode-auto-solver: ============================================================
+2026-11-11 12:30:33,585 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-11 12:30:33,585 [INFO] leetcode-auto-solver: ============================================================
+2026-11-11 12:30:33,831 [INFO] src.leetcode_api: Daily challenge: [3789] Minimum Cost to Acquire Required Items (Medium)
+2026-11-11 12:30:33,831 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3789] Minimum Cost to Acquire Required Items (Medium)
+2026-11-11 12:30:34,149 [INFO] src.leetcode_api: Fetched details for: Minimum Cost to Acquire Required Items
+2026-11-11 12:30:34,149 [INFO] src.bulk_downloader: 📦 DB hit: minimum-cost-to-acquire-required-items (source: kamyu104/LeetCode-Solutions)
+2026-11-11 12:30:34,149 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-11 12:30:34,150 [INFO] leetcode-auto-solver: DRY RUN — skipping submission

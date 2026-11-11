@@ -1,0 +1,18 @@
+{
+  "status": "dry_run",
+  "date": "2026-11-11T12:30:33.585018+00:00",
+  "problem": {
+    "id": "3789",
+    "title": "Minimum Cost to Acquire Required Items",
+    "slug": "minimum-cost-to-acquire-required-items",
+    "difficulty": "Medium",
+    "date": "2026-11-11",
+    "tags": [
+      "Math",
+      "Greedy"
+    ]
+  },
+  "submission": null,
+  "error": null,
+  "solution_code": "# Time:  O(1)\n# Space: O(1)\n\n# math\nclass Solution(object):\n    def minimumCost(self, cost1, cost2, costBoth, need1, need2):\n        \"\"\"\n        :type cost1: int\n        :type cost2: int\n        :type costBoth: int\n        :type need1: int\n        :type need2: int\n        :rtype: int\n        \"\"\"\n        mn = min(need1, need2)\n        mx = max(need1, need2)\n        return mn*min(cost1+cost2, costBoth)+min((need1-mn)*cost1+(need2-mn)*cost2, (mx-mn)*costBoth)\n\n\n# Time:  O(1)\n# Space: O(1)\n# math\nclass Solution2(object):\n    def minimumCost(self, cost1, cost2, costBoth, need1, need2):\n        \"\"\"\n        :type cost1: int\n        :type cost2: int\n        :type costBoth: int\n        :type need1: int\n        :type need2: int\n        :rtype: int\n        \"\"\"\n        mn = min(need1, need2)\n        mx = max(need1, need2)\n        return min(need1*cost1+need2*cost2, mn*costBoth+(need1-mn)*cost1+(need2-mn)*cost2, mx*costBoth)\n"
+}
