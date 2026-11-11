@@ -74,9 +74,26 @@ class NodriverAuthenticator:
         viewport = random.choice(VIEWPORTS)
         ua = random.choice(USER_AGENTS)
 
-        browser = await uc.start(
+        # Find the best Chrome binary — prefer google-chrome-stable over snap chromium
+        import shutil
+        chrome_path = None
+        for candidate in [
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/google-chrome",
+            shutil.which("google-chrome-stable"),
+            shutil.which("google-chrome"),
+            shutil.which("chromium-browser"),
+            shutil.which("chromium"),
+        ]:
+            if candidate and os.path.isfile(candidate):
+                chrome_path = candidate
+                break
+
+        logger.info(f"Using Chrome binary: {chrome_path or 'auto-detect'}")
+
+        start_kwargs = dict(
             headless=True,
-            sandbox=False,  # Required for GitHub Actions (runs as root-like)
+            sandbox=False,
             browser_args=[
                 f"--window-size={viewport[0]},{viewport[1]}",
                 "--disable-blink-features=AutomationControlled",
@@ -93,6 +110,10 @@ class NodriverAuthenticator:
                 f"--user-agent={ua}",
             ],
         )
+        if chrome_path:
+            start_kwargs["browser_executable_path"] = chrome_path
+
+        browser = await uc.start(**start_kwargs)
 
         try:
             page = await browser.get("https://leetcode.com/accounts/login/")

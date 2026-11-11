@@ -53,16 +53,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests PyNaCl nodriver
-          # nodriver uses system Chrome — install it
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq google-chrome-stable 2>/dev/null || {
-            # If Chrome not in default repos, add Google's repo
-            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
-            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq google-chrome-stable
-          }
-          google-chrome --version || true
+
+          # Install Google Chrome (not snap chromium — nodriver needs real Chrome)
+          if ! command -v google-chrome-stable &>/dev/null; then
+            wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+            rm -f google-chrome-stable_current_amd64.deb
+          fi
+
+          echo "Chrome binary:"
+          which google-chrome-stable || which google-chrome || which chromium || echo "NOT FOUND"
+          google-chrome-stable --version 2>/dev/null || google-chrome --version 2>/dev/null || chromium --version 2>/dev/null || echo "VERSION CHECK FAILED"
 
       - name: 🔐 Check if refresh needed
         id: check

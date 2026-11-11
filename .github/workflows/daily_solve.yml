@@ -55,13 +55,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests PyNaCl nodriver
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq google-chrome-stable 2>/dev/null || {
-            wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
-            echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq google-chrome-stable
-          }
+          if ! command -v google-chrome-stable &>/dev/null; then
+            wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+            rm -f google-chrome-stable_current_amd64.deb
+          fi
 
       - name: 🔄 Refresh LeetCode tokens
         env:
