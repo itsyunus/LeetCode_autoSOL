@@ -312,8 +312,23 @@ class NodriverAuthenticator:
                 if "login" not in current_url.lower() and "accounts" not in current_url.lower():
                     logger.info(f"Redirected to: {current_url}")
                     break
+                if i == 5:
+                    # At ~9 seconds, capture page state for debugging
+                    try:
+                        page_text = await tab.evaluate("document.body.innerText")
+                        logger.info(f"Page text at 9s (first 1000 chars): {page_text[:1000]}")
+                    except Exception:
+                        pass
                 if i == 19:
-                    logger.warning(f"Still on login page after 30s. URL: {current_url}")
+                    # Capture final page state
+                    try:
+                        page_text = await tab.evaluate("document.body.innerText")
+                        page_html = await tab.evaluate("document.body.innerHTML")
+                        logger.warning(f"Still on login page after 30s. URL: {current_url}")
+                        logger.info(f"Final page text: {page_text[:2000]}")
+                        logger.info(f"Final page HTML (first 2000 chars): {page_html[:2000]}")
+                    except Exception as e:
+                        logger.warning(f"Still on login page after 30s. URL: {current_url}. Could not capture page state: {e}")
 
             # Extra settle time for cookies
             await asyncio.sleep(random.uniform(2, 4))
