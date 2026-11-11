@@ -1,0 +1,132 @@
+# ─────────────────────────────────────────────────────────────
+# GitHub Actions: LeetCode Session Keep-Alive
+# ─────────────────────────────────────────────────────────────
+# Runs every 6 hours to keep the LeetCode session alive.
+# Hits the GraphQL API with current cookies — if LeetCode
+# rotates them, captures the new ones and auto-updates secrets.
+#
+# No login. No CAPTCHA. No local machine needed.
+# ─────────────────────────────────────────────────────────────
+
+name: 🫀 Session Keep-Alive
+
+on:
+  schedule:
+    # Every 6 hours: midnight, 6am, noon, 6pm UTC
+    - cron: "0 */6 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keep-alive:
+    name: 🫀 Keep Session Alive
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v6
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: 📦 Install dependencies
+        run: pip install requests PyNaCl
+
+      - name: 🫀 Probe & Refresh Session
+        id: keepalive
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python -m src.session_keeper
+
+      - name: 📧 Alert on Session Death
+        if: failure()
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        run: |
+          python3 << 'PYEOF'
+          import os, smtplib, sys
+          from email.mime.text import MIMEText
+          from email.mime.multipart import MIMEMultipart
+          from datetime import datetime, timezone
+
+          smtp_user = os.environ.get("SMTP_USER", "")
+          smtp_pass = os.environ.get("SMTP_PASSWORD", "")
+          to_email = os.environ.get("NOTIFICATION_EMAIL", "")
+
+          if not all([smtp_user, smtp_pass, to_email]):
+              print("⚠️  Email not configured — skipping alert")
+              sys.exit(0)
+
+          now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+          msg = MIMEMultipart("alternative")
+          msg["Subject"] = f"🚨 LeetCode Session Dead — {now}"
+          msg["From"] = smtp_user
+          msg["To"] = to_email
+
+          html = f"""
+          <div style="font-family:system-ui;max-width:520px;margin:auto;padding:24px;background:#0d1117;color:#e6edf3;border-radius:16px;border:1px solid #30363d">
+            <h2 style="color:#f85149;margin-top:0">🚨 Session Expired</h2>
+            <p>The keep-alive probe at <b>{now}</b> detected that your LeetCode session has expired.</p>
+            <p>The daily auto-solver <b>will fail</b> until you refresh the cookies.</p>
+
+            <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;margin:16px 0">
+              <h3 style="color:#58a6ff;margin-top:0">🔧 Fix in 30 seconds:</h3>
+              <ol style="padding-left:20px">
+                <li>Open <a href="https://leetcode.com" style="color:#58a6ff">leetcode.com</a> — log in if needed</li>
+                <li>Click the <b>LeetCode Cookie Pusher</b> extension</li>
+                <li>Click <b>Extract</b> → <b>Push to GitHub</b></li>
+              </ol>
+            </div>
+
+            <p style="color:#8b949e;font-size:12px;margin-bottom:0">
+              Sent by Session Keep-Alive • Run: ${{{{ github.run_number }}}}
+            </p>
+          </div>
+          """
+          msg.attach(MIMEText(html, "html"))
+
+          try:
+              host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+              port = int(os.environ.get("SMTP_PORT", "587"))
+              with smtplib.SMTP(host, port) as server:
+                  server.starttls()
+                  server.login(smtp_user, smtp_pass)
+                  server.sendmail(smtp_user, to_email, msg.as_string())
+              print(f"📧 Alert sent to {to_email}")
+          except Exception as e:
+              print(f"⚠️  Email failed: {e}")
+          PYEOF
+
+      - name: 📊 Summary
+        if: always()
+        run: |
+          {
+            echo "## 🫀 Session Keep-Alive"
+            echo ""
+            if [ "${{ steps.keepalive.outcome }}" = "success" ]; then
+              echo "✅ **Session is alive.** Cookies probed and any rotations captured."
+            else
+              echo "🚨 **Session is DEAD.** Refresh cookies via the Chrome extension."
+              echo ""
+              echo "### Quick fix:"
+              echo "1. Open [leetcode.com](https://leetcode.com) and log in"
+              echo "2. Click **LeetCode Cookie Pusher** extension"
+              echo "3. Click **Extract** → **Push to GitHub**"
+            fi
+            echo ""
+            echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo "- Schedule: Every 6 hours (4x/day)"
+          } >> "$GITHUB_STEP_SUMMARY"
+

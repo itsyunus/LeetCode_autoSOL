@@ -105,6 +105,20 @@ jobs:
           fi
           python -m src.main
 
+      - name: 🫀 Post-solve cookie capture
+        if: success()
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          pip install PyNaCl -q
+          python3 -c "
+          from src.session_keeper import post_solve_cookie_refresh
+          post_solve_cookie_refresh()
+          " || echo "⚠️ Cookie capture skipped (non-critical)"
+
       - name: Generate progress dashboard
         if: always()
         run: python -m src.dashboard
