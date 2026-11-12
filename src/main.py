@@ -189,7 +189,7 @@ class DailySolverPipeline:
             logger.info(f"📋 Daily Problem: [{frontend_id}] {title} ({difficulty})")
 
             # ── Step 2: Check if already solved on LeetCode ──────────
-            if self.skip_if_solved and self.lc.is_already_solved(slug):
+            if self.skip_if_solved and self.lc.is_already_solved(slug, challenge["date"]):
                 logger.info("✅ Already solved today — nothing to do!")
                 result["status"] = "already_solved"
                 solution_code = self.db.get_solution(slug)
