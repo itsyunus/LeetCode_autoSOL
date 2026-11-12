@@ -125,7 +125,7 @@ jobs:
               echo "⚠️ **Session check failed.** Inspect logs: login expiry, network/API failure, or secret-update permission failure."
               echo ""
               echo "If logs explicitly report isSignedIn=False, log in to LeetCode and refresh LEETCODE_SESSION + LEETCODE_CSRF_TOKEN in [GitHub Secrets](https://github.com/itsyunus/LeetCode_autoSOL/settings/secrets/actions)."
-              echo "If logs report GH_PAT permission errors, grant repository Actions secrets read/write access."
+              echo "If logs report GH_PAT permission errors, grant repository Secrets: read/write permission to GH_PAT (fine-grained token), or repo scope for a classic token."
             fi
             echo ""
             echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
