@@ -325,7 +325,7 @@ class SessionKeeper:
             if not ok:
                 raise RuntimeError(
                     f"Failed to update GitHub Actions secret {name}. "
-                    "Check GH_PAT permissions: repository Actions secrets read/write."
+                    "Check GH_PAT permissions: repository Secrets: read/write permission (fine-grained token), or classic repo scope."
                 )
         if self.new_csrf:
             self.http.headers["x-csrftoken"] = self.new_csrf
