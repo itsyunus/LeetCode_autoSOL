@@ -242,125 +242,93 @@ class SessionKeeper:
                         self.new_csrf = val
 
     def probe_session(self) -> bool:
-        """
-        Hit multiple LeetCode endpoints to:
-          a) Verify the session is still valid
-          b) Capture any rotated cookies
-          c) Keep the session alive through activity
-
-        Returns True if session is valid, False if expired.
-        """
-        logger.info("═" * 60)
-        logger.info("🫀 LeetCode Session Keep-Alive — Starting probe cycle")
-        logger.info("═" * 60)
-
-        session_valid = False
-
-        for name, query, var_factory in PROBE_ENDPOINTS:
-            logger.info(f"\n── Probing: {name} ──")
-
-            variables = None
-            if self.username and name in ("user_progress", "recent_submissions"):
-                variables = var_factory(self.username)
-            elif name in ("user_progress", "recent_submissions"):
-                # Skip user-specific queries until we know the username
-                if not self.username:
-                    logger.info(f"  ⏭️  Skipping {name} (username not yet known)")
-                    continue
-                variables = var_factory(self.username)
-
-            payload = {"query": query}
-            if variables:
-                payload["variables"] = variables
-
+        """Verify authentication first; distinguish expiry from transient API failure."""
+        logger.info("Starting LeetCode session probe")
+        last_error = None
+        for attempt in range(3):
             try:
                 resp = self.http.post(
                     LEETCODE_GRAPHQL,
-                    json=payload,
+                    json={"query": QUERY_USER_STATUS},
                     timeout=20,
                 )
-
-                # Always extract cookies, even on error responses
-                self._extract_cookies_from_response(resp, name)
-
-                if resp.status_code == 200:
-                    data = resp.json()
-
-                    if name == "user_status":
-                        user_status = data.get("data", {}).get("userStatus", {})
-                        if user_status.get("isSignedIn"):
-                            self.username = user_status.get("username", "unknown")
-                            session_id = user_status.get("activeSessionId", "N/A")
-                            logger.info(f"  ✅ Session VALID — User: {self.username} | Session ID: {session_id}")
-                            session_valid = True
-                        else:
-                            logger.warning(f"  ❌ Session EXPIRED — isSignedIn=False")
-                            return False
-
-                    elif name == "daily_challenge":
-                        q = data.get("data", {}).get("activeDailyCodingChallengeQuestion", {})
-                        if q:
-                            question = q.get("question", {})
-                            logger.info(
-                                f"  📋 Daily: #{question.get('questionId')} "
-                                f"{question.get('title')} [{question.get('difficulty')}] "
-                                f"({q.get('date')})"
-                            )
-
-                    elif name == "user_progress":
-                        progress = data.get("data", {}).get("userProfileUserQuestionProgressV2", {})
-                        if progress:
-                            accepted = progress.get("numAcceptedQuestions", [])
-                            total = sum(item.get("count", 0) for item in accepted)
-                            logger.info(f"  📊 Total accepted: {total}")
-
-                    elif name == "recent_submissions":
-                        subs = data.get("data", {}).get("recentAcSubmissionList", [])
-                        if subs:
-                            latest = subs[0]
-                            ts = datetime.fromtimestamp(int(latest["timestamp"]), tz=timezone.utc)
-                            logger.info(f"  📝 Latest AC: {latest['title']} ({ts.strftime('%Y-%m-%d %H:%M UTC')})")
-
-                else:
-                    logger.warning(f"  ⚠️  HTTP {resp.status_code} on {name}")
-
-                # Small delay between probes to look natural
-                time.sleep(1.5)
-
-            except requests.exceptions.Timeout:
-                logger.warning(f"  ⏱️  Timeout on {name}")
+                self._extract_cookies_from_response(resp, "user_status")
+                resp.raise_for_status()
+                data = resp.json()
+                if data.get("errors"):
+                    raise RuntimeError(f"LeetCode userStatus GraphQL error: {data['errors']}")
+                user_status = data.get("data", {}).get("userStatus")
+                if not isinstance(user_status, dict) or "isSignedIn" not in user_status:
+                    raise RuntimeError("LeetCode returned no usable userStatus; authentication could not be verified.")
+                if not user_status.get("isSignedIn"):
+                    logger.error("LeetCode explicitly reports isSignedIn=False.")
+                    return False
+                self.username = user_status.get("username") or "unknown"
+                logger.info("Session valid for user: %s", self.username)
+                break
             except Exception as exc:
-                logger.error(f"  💥 Error on {name}: {exc}")
+                last_error = exc
+                logger.warning("Authentication probe %s/3 failed: %s", attempt + 1, exc)
+                if attempt < 2:
+                    time.sleep(5 * (attempt + 1))
+        else:
+            raise RuntimeError(
+                "Could not verify LeetCode authentication after 3 attempts. "
+                "This may be a network, rate-limit, or security-challenge issue; "
+                "the session is not being labelled expired."
+            ) from last_error
 
-        return session_valid
+        # Additional authenticated requests may return rotated cookies.
+        # They are non-critical once userStatus has confirmed the login.
+        probes = [
+            ("daily_challenge", QUERY_DAILY_CHALLENGE, None),
+            ("user_progress", QUERY_USER_PROGRESS, {"userSlug": self.username}),
+            ("recent_submissions", QUERY_RECENT_SUBMISSIONS, {"username": self.username, "limit": 5}),
+        ]
+        for name, query, variables in probes:
+            try:
+                payload = {"query": query}
+                if variables:
+                    payload["variables"] = variables
+                resp = self.http.post(LEETCODE_GRAPHQL, json=payload, timeout=20)
+                self._extract_cookies_from_response(resp, name)
+                resp.raise_for_status()
+                data = resp.json()
+                if data.get("errors"):
+                    logger.warning("GraphQL warning on %s: %s", name, data["errors"])
+            except Exception as exc:
+                logger.warning("Non-critical probe %s failed: %s", name, exc)
+            time.sleep(1)
+        return True
 
     def push_refreshed_cookies(self) -> Dict[str, bool]:
-        """Push any newly detected cookies to GitHub Secrets."""
-        results = {}
-
-        if not self.gh_manager:
-            logger.warning("⚠️  No GitHub credentials — cannot push refreshed cookies")
-            return results
-
+        """Persist every detected cookie rotation; fail loudly if persistence fails."""
+        results: Dict[str, bool] = {}
         if not self.new_session and not self.new_csrf:
-            logger.info("ℹ️  No cookie rotation detected — secrets unchanged")
+            logger.info("No cookie rotation detected; GitHub Secrets remain unchanged.")
             return results
+        if not self.gh_manager:
+            raise RuntimeError(
+                "LeetCode returned refreshed cookies, but GH_PAT is missing. "
+                "Cannot persist the rotated cookies to GitHub Secrets."
+            )
 
-        logger.info("\n🔐 Pushing refreshed cookies to GitHub Secrets...")
-
+        updates = []
         if self.new_session:
-            results["LEETCODE_SESSION"] = self.gh_manager.update_secret(
-                "LEETCODE_SESSION", self.new_session
-            )
-
+            updates.append(("LEETCODE_SESSION", self.new_session))
         if self.new_csrf:
-            results["LEETCODE_CSRF_TOKEN"] = self.gh_manager.update_secret(
-                "LEETCODE_CSRF_TOKEN", self.new_csrf
-            )
+            updates.append(("LEETCODE_CSRF_TOKEN", self.new_csrf))
 
-            # Also update x-csrftoken header for subsequent requests
+        for name, value in updates:
+            ok = self.gh_manager.update_secret(name, value)
+            results[name] = ok
+            if not ok:
+                raise RuntimeError(
+                    f"Failed to update GitHub Actions secret {name}. "
+                    "Check GH_PAT permissions: repository Actions secrets read/write."
+                )
+        if self.new_csrf:
             self.http.headers["x-csrftoken"] = self.new_csrf
-
         return results
 
     def run(self) -> int:
