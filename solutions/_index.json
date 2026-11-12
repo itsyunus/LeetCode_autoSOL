@@ -28,11 +28,22 @@
         "frontend_id": "3789",
         "source": "bulk_db"
       }
+    },
+    "longest-strictly-increasing-or-strictly-decreasing-subarray": {
+      "file": "3105_longest-strictly-increasing-or-strictly-decreasing-subarray.py",
+      "question_id": "3372",
+      "title": "Longest Strictly Increasing or Strictly Decreasing Subarray",
+      "difficulty": "Easy",
+      "solved_at": "2026-11-12T02:58:00.123191+00:00",
+      "metadata": {
+        "frontend_id": "3105",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 2,
-    "easy": 0,
+    "total": 3,
+    "easy": 1,
     "medium": 1,
     "hard": 1
   }

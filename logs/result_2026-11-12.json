@@ -1,0 +1,24 @@
+{
+  "status": "accepted",
+  "date": "2026-11-12T02:57:45.005982+00:00",
+  "problem": {
+    "id": "3105",
+    "title": "Longest Strictly Increasing or Strictly Decreasing Subarray",
+    "slug": "longest-strictly-increasing-or-strictly-decreasing-subarray",
+    "difficulty": "Easy",
+    "date": "2026-11-12",
+    "tags": [
+      "Array"
+    ]
+  },
+  "submission": {
+    "id": 2194280222,
+    "runtime": "2 ms",
+    "memory": "19 MB",
+    "runtime_percentile": 42.0131,
+    "memory_percentile": 93.8731,
+    "attempts": 1,
+    "language": "python3"
+  },
+  "error": null
+}

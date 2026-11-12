@@ -345,3 +345,30 @@ RuntimeError: Run returned 403
 2026-11-11 12:44:10,307 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 1 ms, Memory: 19.3 MB
 2026-11-11 12:44:10,315 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
 2026-11-11 12:44:10,316 [INFO] src.solutions_db: Saved solution: 3789_minimum-cost-to-acquire-required-items.py
+2026-11-12 02:57:42,248 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-12 02:57:42,250 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-12 02:57:42,250 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-12 02:57:42,250 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-12 02:57:42,251 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-12 02:57:42,252 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-12 02:57:42,273 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-12 02:57:42,274 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-12 02:57:42,275 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-12 02:57:42,275 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-12 02:57:45,006 [INFO] leetcode-auto-solver: ============================================================
+2026-11-12 02:57:45,006 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-12 02:57:45,006 [INFO] leetcode-auto-solver: ============================================================
+2026-11-12 02:57:45,268 [INFO] src.leetcode_api: Daily challenge: [3105] Longest Strictly Increasing or Strictly Decreasing Subarray (Easy)
+2026-11-12 02:57:45,269 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3105] Longest Strictly Increasing or Strictly Decreasing Subarray (Easy)
+2026-11-12 02:57:45,571 [INFO] src.leetcode_api: Fetched details for: Longest Strictly Increasing or Strictly Decreasing Subarray
+2026-11-12 02:57:45,572 [INFO] src.bulk_downloader: 📦 DB hit: longest-strictly-increasing-or-strictly-decreasing-subarray [python3] from walkccc/LeetCode
+2026-11-12 02:57:45,572 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-12 02:57:45,572 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-12 02:57:46,414 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-12 02:57:53,270 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-12 02:57:53,270 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-12 02:57:53,319 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/longest-strictly-increasing-or-strictly-decreasing-subarray/...
+2026-11-12 02:57:56,700 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2194280222
+2026-11-12 02:58:00,103 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 2 ms, Memory: 19 MB
+2026-11-12 02:58:00,122 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
+2026-11-12 02:58:00,127 [INFO] src.solutions_db: Saved solution: 3105_longest-strictly-increasing-or-strictly-decreasing-subarray.py
