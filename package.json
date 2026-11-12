@@ -1,0 +1,12 @@
+{
+  "name": "leetcode-session-puppeteer-poc",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Manual proof-of-concept for LeetCode browser login in GitHub Actions",
+  "scripts": {
+    "poc:login": "node scripts/puppeteer-login-poc.js"
+  },
+  "dependencies": {
+    "puppeteer": "24.15.0"
+  }
+}
