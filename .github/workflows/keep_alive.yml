@@ -1,7 +1,8 @@
 # ─────────────────────────────────────────────────────────────
 # GitHub Actions: LeetCode Session Keep-Alive
 # ─────────────────────────────────────────────────────────────
-# Runs every 6 hours to keep the LeetCode session alive.
+# Runs on GitHub-hosted infrastructure every 2 hours; no personal device is required.
+# Probing cannot override a server-enforced LeetCode expiry, but detects it promptly.
 # Hits the GraphQL API with current cookies — if LeetCode
 # rotates them, captures the new ones and auto-updates secrets.
 #
@@ -12,8 +13,8 @@ name: 🫀 Session Keep-Alive
 
 on:
   schedule:
-    # Every 6 hours: midnight, 6am, noon, 6pm UTC
-    - cron: "0 */6 * * *"
+    # Every 2 hours on GitHub-hosted runners
+    - cron: "0 */2 * * *"
 
   workflow_dispatch:
 
@@ -80,8 +81,8 @@ jobs:
           html = f"""
           <div style="font-family:system-ui;max-width:520px;margin:auto;padding:24px;background:#0d1117;color:#e6edf3;border-radius:16px;border:1px solid #30363d">
             <h2 style="color:#f85149;margin-top:0">🚨 Session Expired</h2>
-            <p>The keep-alive probe at <b>{now}</b> detected your LeetCode session has expired.</p>
-            <p>The daily auto-solver <b>will fail</b> until you refresh the cookies.</p>
+            <p>The keep-alive check at <b>{now}</b> could not verify or maintain the LeetCode session.</p>
+            <p>Check workflow logs to distinguish an expired login from a temporary network/API failure or GitHub Secret permission issue. The daily auto-solver may fail until resolved.</p>
 
             <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:16px;margin:16px 0">
               <h3 style="color:#58a6ff;margin-top:0">Fix in 30 seconds:</h3>
@@ -121,14 +122,12 @@ jobs:
             if [ "${{ steps.keepalive.outcome }}" = "success" ]; then
               echo "✅ **Session is alive.** Cookies probed and any rotations captured."
             else
-              echo "🚨 **Session is DEAD.** Refresh cookies manually."
+              echo "⚠️ **Session check failed.** Inspect logs: login expiry, network/API failure, or secret-update permission failure."
               echo ""
-              echo "### Quick fix:"
-              echo "1. Open [leetcode.com](https://leetcode.com) and log in"
-              echo "2. DevTools → Application → Cookies → copy LEETCODE_SESSION + csrftoken"
-              echo "3. Update in [GitHub Secrets](https://github.com/itsyunus/LeetCode_autoSOL/settings/secrets/actions)"
+              echo "If logs explicitly report isSignedIn=False, log in to LeetCode and refresh LEETCODE_SESSION + LEETCODE_CSRF_TOKEN in [GitHub Secrets](https://github.com/itsyunus/LeetCode_autoSOL/settings/secrets/actions)."
+              echo "If logs report GH_PAT permission errors, grant repository Secrets: read/write permission to GH_PAT (fine-grained token), or repo scope for a classic token."
             fi
             echo ""
             echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Schedule: Every 6 hours (4x/day)"
+            echo "- Schedule: Every 2 hours on GitHub-hosted runners (12x/day; no laptop/phone required)"
           } >> "$GITHUB_STEP_SUMMARY"
