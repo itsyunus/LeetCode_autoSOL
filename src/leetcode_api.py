@@ -11,6 +11,7 @@ import requests
 import time
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, Tuple
 
 logger = logging.getLogger(__name__)
@@ -311,15 +312,33 @@ class LeetCodeAPI:
             return []
         return question_data.get("submissions") or []
 
-    def is_already_solved(self, slug: str) -> bool:
-        """Check if the user has already solved this problem today."""
+    def is_already_solved(self, slug: str, challenge_date: str) -> bool:
+        """Return True only when an Accepted submission matches the challenge date.
+
+        LeetCode's submission history includes old Accepted submissions.  Those
+        must not suppress today's Daily Challenge run.  Both the challenge date
+        and submission timestamps are interpreted in UTC, matching LeetCode's
+        daily-challenge date boundary.
+        """
         try:
-            submissions = self.get_submission_list(slug, limit=5)
+            target_date = datetime.strptime(challenge_date, "%Y-%m-%d").date()
+            submissions = self.get_submission_list(slug, limit=20)
             for sub in submissions:
-                if sub["statusDisplay"] == "Accepted":
-                    logger.info(f"Problem '{slug}' already solved — skipping.")
+                if sub.get("statusDisplay") != "Accepted":
+                    continue
+                timestamp = sub.get("timestamp")
+                if timestamp is None:
+                    continue
+                submitted_date = datetime.fromtimestamp(
+                    float(timestamp), tz=timezone.utc
+                ).date()
+                if submitted_date == target_date:
+                    logger.info(
+                        "Problem '%s' was accepted on challenge date %s — skipping.",
+                        slug, challenge_date,
+                    )
                     return True
         except Exception as e:
-            logger.warning(f"Could not check submission history: {e}")
+            logger.warning("Could not verify same-day submission history: %s", e)
         return False
 
