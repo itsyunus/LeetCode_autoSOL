@@ -1,0 +1,41 @@
+name: "🔐 Puppeteer Login Proof of Concept"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-login:
+    name: Verify fresh LeetCode browser session
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Puppeteer
+        run: npm install --no-audit --no-fund
+
+      - name: Attempt browser login and verify session
+        env:
+          LEETCODE_EMAIL: ${{ secrets.LEETCODE_EMAIL }}
+          LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
+        run: npm run poc:login
+
+      - name: Publish safe result summary
+        if: always()
+        run: |
+          {
+            echo "## Puppeteer login proof of concept"
+            echo ""
+            echo "This run tests browser login only. Cookie values are never printed or saved."
+            echo "Inspect the login step for POC_RESULT and its safe failure reason."
+          } >> "$GITHUB_STEP_SUMMARY"
