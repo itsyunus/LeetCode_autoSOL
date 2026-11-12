@@ -50,9 +50,9 @@ function fail(message) {
       if (/captcha|cloudflare|verify you are human|security challenge|turnstile/i.test(
         pageState.url + " " + pageState.title + " " + pageState.text
       )) {
-        fail("LeetCode presented a CAPTCHA or security challenge. Manual verification is required.");
+        fail(`LeetCode presented a CAPTCHA or security challenge [title: "${pageState.title}", url: ${pageState.url}]. Manual verification is required.`);
       } else {
-        fail("Login form fields were not found; LeetCode may have changed its login page.");
+        fail(`Login form fields were not found [title: "${pageState.title}", url: ${pageState.url}]; LeetCode may have changed its login page or blocked the request.`);
       }
       return;
     }
@@ -63,8 +63,11 @@ function fail(message) {
     await page.type(passwordSelector, password, { delay: 25 });
 
     const submitSelector = await firstVisible(page, [
+      "#signin_btn",
+      'button#signin_btn',
       'button[type="submit"]',
       'input[type="submit"]',
+      'button[id*="sign"]',
     ]);
     if (!submitSelector) {
       fail("Login submit control was not found.");
@@ -139,10 +142,16 @@ function fail(message) {
   }
 })();
 
-async function firstVisible(page, selectors) {
-  for (const selector of selectors) {
-    const element = await page.$(selector);
-    if (element && await element.isVisible().catch(() => false)) return selector;
+async function firstVisible(page, selectors, timeout = 25000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    for (const selector of selectors) {
+      const element = await page.$(selector);
+      if (element && (await element.isVisible().catch(() => false))) {
+        return selector;
+      }
+    }
+    await new Promise((r) => setTimeout(r, 500));
   }
   return null;
 }
