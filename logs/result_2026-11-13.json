@@ -1,0 +1,23 @@
+{
+  "status": "dry_run",
+  "date": "2026-11-13T03:15:53.102173+00:00",
+  "problem": {
+    "id": "3420",
+    "title": "Count Non-Decreasing Subarrays After K Operations",
+    "slug": "count-non-decreasing-subarrays-after-k-operations",
+    "difficulty": "Hard",
+    "date": "2026-11-13",
+    "tags": [
+      "Array",
+      "Stack",
+      "Segment Tree",
+      "Queue",
+      "Sliding Window",
+      "Monotonic Stack",
+      "Monotonic Queue"
+    ]
+  },
+  "submission": null,
+  "error": null,
+  "solution_code": "class Solution:\n  def countNonDecreasingSubarrays(self, nums: list[int], k: int) -> int:\n    ans = 0\n    cost = 0\n    # Store (number, count) pairs in non-increasing order. The numbers in the\n    # queue represent what nums[i..j] look like after adjustments.\n    dq = collections.deque()\n\n    j = len(nums) - 1\n    for i, num in reversed(list(enumerate(nums))):\n      count = 1\n      while dq and dq[-1][0] < num:\n        nextNum, nextCount = dq.pop()\n        count += nextCount\n        cost += (num - nextNum) * nextCount  # Adjust `nextNum`s to `num`.\n      dq.append((num, count))\n      while cost > k:  # Remove the rightmost number.\n        rightmostNum, rightmostCount = dq.popleft()\n        cost -= (rightmostNum - nums[j])\n        j -= 1\n        if rightmostCount > 1:\n          dq.appendleft((rightmostNum, rightmostCount - 1))\n      ans += j - i + 1\n\n    return ans\n"
+}
