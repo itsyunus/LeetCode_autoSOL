@@ -356,8 +356,30 @@ class DailySolverPipeline:
                     logger.error(f"No submission ID returned: {sub_response}")
                     continue
 
-                # Poll for result
-                submission_result = self.browser.poll_submission_result(sub_id)
+                # Poll for result. Once LeetCode returns a submission ID, never
+                # resubmit solely because status verification is blocked or unavailable.
+                try:
+                    submission_result = self.browser.poll_submission_result(sub_id)
+                except Exception as exc:
+                    logger.exception(
+                        "Submission %s was created, but its final status could not be verified.",
+                        sub_id,
+                    )
+                    result["status"] = "submitted_unverified"
+                    result["error"] = (
+                        f"LeetCode accepted the submission request and returned ID {sub_id}, "
+                        f"but status verification failed: {exc}. "
+                        "Check this submission in your LeetCode Submissions page. "
+                        "The solver stopped to avoid creating a duplicate submission."
+                    )
+                    result["submission"] = {
+                        "id": sub_id,
+                        "status": "verification_pending",
+                        "language": self.lang,
+                        "attempts": attempt,
+                    }
+                    break
+
                 status_msg = submission_result.get("status_msg", "Unknown")
 
                 if status_msg == "Accepted":
@@ -529,7 +551,7 @@ def main():
     logger.info("=" * 60)
 
     # Exit with error code if failed
-    if result["status"] in ("error", "failed", "validation_failed"):
+    if result["status"] in ("error", "failed", "validation_failed", "submitted_unverified"):
         sys.exit(1)
 
 
