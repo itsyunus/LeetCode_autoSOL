@@ -24,6 +24,8 @@ import requests
 from typing import Optional, Tuple, Dict, Any
 from base64 import b64encode
 from datetime import datetime, timezone
+from .cookie_bundle import load_cookie_pair, serialize_cookie_pair
+from .preflight import run_preflight
 
 try:
     from nacl import encoding, public
@@ -178,8 +180,8 @@ class SessionKeeper:
         gh_token: Optional[str] = None,
         gh_repo: Optional[str] = None,
     ):
-        self.original_session = session_token
-        self.original_csrf = csrf_token
+        self.original_session = (session_token or "").strip()
+        self.original_csrf = (csrf_token or "").strip()
         self.gh_manager = GitHubSecretsManager(gh_token, gh_repo) if gh_token and gh_repo else None
 
         # Build the HTTP session
@@ -298,34 +300,49 @@ class SessionKeeper:
         return True
 
     def push_refreshed_cookies(self) -> Dict[str, bool]:
-        """Persist every detected cookie rotation; fail loudly if persistence fails."""
-        results: Dict[str, bool] = {}
+        """Verify a complete candidate pair, then write it as one atomic bundle secret.
+
+        GitHub Actions secret values are write-only through the REST API. A
+        multi-secret rollback cannot reliably recover old values. The canonical
+        bundle therefore stores both cookies in one secret and requires one PUT.
+        """
         if not self.new_session and not self.new_csrf:
             logger.info("No cookie rotation detected; GitHub Secrets remain unchanged.")
-            return results
+            return {}
+
         if not self.gh_manager:
             raise RuntimeError(
                 "LeetCode returned refreshed cookies, but GH_PAT is missing. "
-                "Cannot persist the rotated cookies to GitHub Secrets."
+                "Cannot persist the candidate cookie bundle."
             )
 
-        updates = []
-        if self.new_session:
-            updates.append(("LEETCODE_SESSION", self.new_session))
-        if self.new_csrf:
-            updates.append(("LEETCODE_CSRF_TOKEN", self.new_csrf))
+        candidate_session = (self.new_session or self.original_session or "").strip()
+        candidate_csrf = (self.new_csrf or self.original_csrf or "").strip()
+        bundle = serialize_cookie_pair(candidate_session, candidate_csrf)
 
-        for name, value in updates:
-            ok = self.gh_manager.update_secret(name, value)
-            results[name] = ok
-            if not ok:
-                raise RuntimeError(
-                    f"Failed to update GitHub Actions secret {name}. "
-                    "Check GH_PAT permissions: repository Secrets: read/write permission (fine-grained token), or classic repo scope."
-                )
-        if self.new_csrf:
-            self.http.headers["x-csrftoken"] = self.new_csrf
-        return results
+        # Verify the complete candidate pair in a fresh client before writing.
+        ok, status, reason = run_preflight(candidate_session, candidate_csrf)
+        if not ok:
+            logger.error(
+                "Rejected candidate cookie bundle; existing GitHub secret was not changed (%s): %s",
+                status, reason,
+            )
+            raise RuntimeError("Candidate cookie bundle verification failed: " + reason)
+
+        if candidate_session == self.original_session and candidate_csrf == self.original_csrf:
+            logger.info("Candidate pair is unchanged; no GitHub secret update is needed.")
+            return {}
+
+        if not self.gh_manager.update_secret("LEETCODE_COOKIE_BUNDLE", bundle):
+            raise RuntimeError(
+                "Failed to update LEETCODE_COOKIE_BUNDLE. The previous bundle remains the canonical credential."
+            )
+
+        logger.info("Verified LEETCODE_COOKIE_BUNDLE updated with one GitHub Secrets write.")
+        self.http.cookies.set("LEETCODE_SESSION", candidate_session, domain=".leetcode.com")
+        self.http.cookies.set("csrftoken", candidate_csrf, domain=".leetcode.com")
+        self.http.headers["x-csrftoken"] = candidate_csrf
+        return {"LEETCODE_COOKIE_BUNDLE": True}
 
     def run(self) -> int:
         """
@@ -376,8 +393,11 @@ def post_solve_cookie_refresh() -> None:
     This is the "passive refresh" strategy — every time the solver
     uses the API, there's a chance LeetCode sends back fresh cookies.
     """
-    session_tok = os.environ.get("LEETCODE_SESSION", "")
-    csrf_tok = os.environ.get("LEETCODE_CSRF_TOKEN", "")
+    try:
+        session_tok, csrf_tok = load_cookie_pair()
+    except ValueError as exc:
+        logger.warning("Cookie refresh skipped: %s", exc)
+        return
     gh_token = os.environ.get("GH_PAT", "")
     gh_repo = os.environ.get("GITHUB_REPOSITORY", "")
 
@@ -392,8 +412,11 @@ def post_solve_cookie_refresh() -> None:
 
 # ─── CLI Entry Point ───────────────────────────────────────────────
 def main() -> int:
-    session_tok = os.environ.get("LEETCODE_SESSION", "")
-    csrf_tok = os.environ.get("LEETCODE_CSRF_TOKEN", "")
+    try:
+        session_tok, csrf_tok = load_cookie_pair()
+    except ValueError as exc:
+        logger.error("%s", exc)
+        return 1
     gh_token = os.environ.get("GH_PAT", "")
     gh_repo = os.environ.get("GITHUB_REPOSITORY", "")
 
