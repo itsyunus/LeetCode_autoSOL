@@ -139,6 +139,28 @@ class FallbackValidationTests(unittest.TestCase):
         self.assertEqual(pipeline.solver.generate_solution.call_count, 1)
         pipeline.browser.run_code.assert_called_once()
 
+    def test_auth_rejection_stops_language_fallback_chain(self):
+        pipeline = DailySolverPipeline.__new__(DailySolverPipeline)
+        pipeline.lang = "python3"
+        pipeline.attempted_languages = ["python3"]
+        pipeline.solver = Mock()
+        pipeline.solver.generate_solution.return_value = ("class Solution {};", {})
+        pipeline.browser = Mock()
+        pipeline.browser.run_code.side_effect = RuntimeError(
+            "LeetCode run endpoint returned non-JSON HTTP 403"
+        )
+        detail = {
+            "codeSnippets": [
+                {"langSlug": "cpp", "code": "class Solution {};"},
+                {"langSlug": "java", "code": "class Solution {}"},
+            ]
+        }
+
+        with self.assertRaisesRegex(RuntimeError, "HTTP 403"):
+            pipeline._next_runtime_fallback(detail, "sample-problem", "123", "1")
+        self.assertEqual(pipeline.solver.generate_solution.call_count, 1)
+        pipeline.browser.run_code.assert_called_once()
+
 
 class ExplanationTimeoutTests(unittest.TestCase):
     def test_explanation_timeout_returns_without_waiting_for_worker(self):
