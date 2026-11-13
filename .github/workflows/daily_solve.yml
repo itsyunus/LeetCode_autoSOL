@@ -53,11 +53,10 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
 
-      # Stop before database downloads, Gemini, or solver logic if this runner is challenged.
+      # Stop before cache/download/Gemini/solver work when LeetCode or Cloudflare blocks this runner.
       - name: 🔎 LeetCode authentication and Cloudflare preflight
         id: preflight
         env:
-          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
           LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
@@ -69,7 +68,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          ALERT_MESSAGE: "Cloudflare challenged the GitHub Action runner or LeetCode authentication failed. Manual session push required. Open the latest Actions run for details."
+          ALERT_MESSAGE: "Cloudflare challenged the GitHub Action runner or LeetCode authentication failed. Manual session push required. Open the latest Actions run for the exact reason."
         run: python -m src.notify
 
       # Stop before cache/download/Gemini/solver work when LeetCode or Cloudflare blocks this runner.
@@ -117,6 +116,7 @@ jobs:
       # ── Solve — uses GITHUB_ENV tokens if refreshed, otherwise falls back to secrets ──
       - name: 🧠 Solve daily challenge
         env:
+          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -130,7 +130,7 @@ jobs:
           SMTP_HOST: ${{ secrets.SMTP_HOST || 'smtp.gmail.com' }}
           SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
         run: |
-          if [ -z "$LEETCODE_SESSION" ] || [ -z "$LEETCODE_CSRF_TOKEN" ]; then
+          if [ -z "$LEETCODE_COOKIE_BUNDLE" ] && { [ -z "$LEETCODE_SESSION" ] || [ -z "$LEETCODE_CSRF_TOKEN" ]; }; then
             echo "❌ No LeetCode tokens available."
             echo "Set LEETCODE_SESSION and LEETCODE_CSRF_TOKEN in your repo's Actions secrets."
             echo ""
