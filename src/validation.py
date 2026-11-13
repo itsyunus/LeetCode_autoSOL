@@ -30,7 +30,7 @@ def classify_validation_result(
     """Classify validation without treating an unavailable service as a pass."""
     if exception is not None:
         reason = str(exception) or type(exception).__name__
-        match = re.search(r"HTTP\s+(\d{3})", reason, re.IGNORECASE)
+        match = re.search(r"(?:HTTP\s+|returned\s+)(\d{3})", reason, re.IGNORECASE)
         code = int(match.group(1)) if match else None
         if code in (401, 403):
             return ValidationResult(
