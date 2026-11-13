@@ -1,10 +1,9 @@
 # ─────────────────────────────────────────────────────────────
 # GitHub Actions: LeetCode Session Keep-Alive
 # ─────────────────────────────────────────────────────────────
-# Runs on GitHub-hosted infrastructure every 2 hours; no personal device is required.
-# Probing cannot override a server-enforced LeetCode expiry, but detects it promptly.
-# Hits the GraphQL API with current cookies — if LeetCode
-# rotates them, captures the new ones and auto-updates secrets.
+# Runs on GitHub-hosted infrastructure every hour; no personal device is required.
+# This is an authentication health check, not a guaranteed session extender.
+# If LeetCode itself rotates cookies in a response, captures them and updates secrets.
 #
 # No login. No CAPTCHA. No local machine needed.
 # ─────────────────────────────────────────────────────────────
@@ -13,8 +12,8 @@ name: 🫀 Session Keep-Alive
 
 on:
   schedule:
-    # Every 2 hours on GitHub-hosted runners
-    - cron: "0 */2 * * *"
+    # Every hour on GitHub-hosted runners
+    - cron: "0 * * * *"
 
   workflow_dispatch:
 
@@ -129,5 +128,5 @@ jobs:
             fi
             echo ""
             echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Schedule: Every 2 hours on GitHub-hosted runners (12x/day; no laptop/phone required)"
+            echo "- Schedule: Every hour on GitHub-hosted runners (24x/day; health check only)"
           } >> "$GITHUB_STEP_SUMMARY"
