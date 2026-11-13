@@ -1,21 +1,17 @@
 """
-LeetCode Session Keep-Alive & Auto-Refresh Engine
+LeetCode Session Health Check & Cookie-Rotation Capture
 ══════════════════════════════════════════════════════
 Runs entirely on GitHub Actions — NO local machine needed.
 
 Strategy:
-  1. Hit LeetCode's GraphQL API with current session cookies
-  2. Capture any Set-Cookie headers (LeetCode rotates cookies on active use)
-  3. If new cookies detected, push them to GitHub Secrets automatically
-  4. Run every 6 hours to ensure session never expires from inactivity
+  1. Check LeetCode's authenticated userStatus endpoint with current cookies
+  2. Capture Set-Cookie headers if LeetCode happens to rotate cookies
+  3. Persist detected cookie changes to GitHub Secrets
 
-The key insight: LeetCode sessions die from INACTIVITY. If we ping
-the API periodically, the session stays alive. Many sites also send
-refreshed cookies (extended expiry) in response Set-Cookie headers —
-we capture those and auto-update secrets so the session effectively
-lives forever.
-
-Zero CAPTCHA. Zero login. Zero local dependency. Pure server-side.
+This hourly check detects authentication loss sooner; it cannot force
+LeetCode to extend a server-side session or prevent revocation. Cookie
+rotation is opportunistic and is not guaranteed. If authentication expires,
+normal interactive login may be required.
 """
 
 import os
@@ -165,7 +161,7 @@ class GitHubSecretsManager:
 
 class SessionKeeper:
     """
-    Keeps LeetCode session alive and captures rotated cookies.
+    Checks LeetCode authentication and captures rotated cookies when returned.
 
     The core loop:
       1. Build a requests.Session with current cookies
