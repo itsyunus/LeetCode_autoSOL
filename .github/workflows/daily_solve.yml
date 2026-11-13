@@ -53,6 +53,25 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
 
+      # Stop before cache/download/Gemini/solver work when LeetCode or Cloudflare blocks this runner.
+      - name: 🔎 LeetCode authentication and Cloudflare preflight
+        id: preflight
+        env:
+          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
+          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+        run: python -m src.preflight
+
+      - name: 📲 Alert when preflight blocks the runner
+        if: failure() && steps.preflight.outcome == 'failure'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ALERT_MESSAGE: "Cloudflare challenged the GitHub Action runner or LeetCode authentication failed. Manual session push required. Open the latest Actions run for the exact reason."
+        run: python -m src.notify
+
       # Automatic credential refresh is disabled; only existing repository secrets are used.
 
       # ── Solutions DB Cache ─────────────────────────────────
@@ -108,6 +127,7 @@ jobs:
       - name: 🫀 Post-solve cookie capture
         if: success()
         env:
+          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
