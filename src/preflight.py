@@ -16,7 +16,6 @@ CHALLENGE_MARKERS = (
     "just a moment",
     "cf-chl-",
     "challenge-platform",
-    "cloudflare",
     "attention required",
     "verify you are human",
 )
