@@ -191,9 +191,27 @@ class BrowserSubmitter:
                     catch (error) { throw new Error('Invalid JSON from LeetCode status check: ' + error.message); }
                 }
                 """
-                result = page.evaluate(check_script, submission_id)
-                state = result.get("state")
+                try:
+                    result = page.evaluate(check_script, submission_id)
+                except Exception as exc:
+                    # A transient Cloudflare/auth edge response while checking status
+                    # does not mean the submission itself failed. Retry polling only;
+                    # never submit the solution again just because verification failed.
+                    message = str(exc)
+                    retryable = any(
+                        marker in message
+                        for marker in ("HTTP 403", "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504", "Timeout")
+                    )
+                    if not retryable:
+                        raise
+                    logger.warning(
+                        "Submission %s status poll %s/%s temporarily failed: %s",
+                        submission_id, attempt + 1, max_retries, message,
+                    )
+                    time.sleep(min(interval * (attempt + 1), 10))
+                    continue
 
+                state = result.get("state")
                 if state == "SUCCESS":
                     status_msg = result.get("status_msg", "Unknown")
                     if status_msg == "Accepted":
@@ -207,7 +225,10 @@ class BrowserSubmitter:
                 logger.debug(f"Poll {attempt + 1}/{max_retries}, state={state}")
                 time.sleep(interval)
 
-            raise TimeoutError(f"Submission {submission_id} still pending")
+            raise TimeoutError(
+                f"Could not verify submission {submission_id} after {max_retries} polls; "
+                "the submission may still be processing"
+            )
         finally:
             page.close()
 
