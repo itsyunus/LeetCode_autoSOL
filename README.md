@@ -172,3 +172,23 @@ MIT
 Use [LeetCode Cookie Pusher](https://github.com/itsyunus/LeetCode-Cookie-Pusher) to refresh the two LeetCode cookie secrets and dispatch this workflow from Chrome. Merge the solver repair PR first, then install the extension from its repository. The extension's first-run default is **dry run**, which generates a solution and uploads dashboard/log artifacts without submitting. Open the Actions run link returned by the extension to inspect the result.
 
 The extension updates only `LEETCODE_SESSION` and `LEETCODE_CSRF_TOKEN`. Configure `GEMINI_API_KEY` separately in repository Actions secrets. Optional SMTP secrets are needed only for email notifications.
+
+## Authentication safety and mobile recovery
+
+The canonical credential is the single encrypted GitHub Actions secret
+`LEETCODE_COOKIE_BUNDLE`, containing both `LEETCODE_SESSION` and
+`LEETCODE_CSRF_TOKEN`. The older two-secret pair remains a migration fallback.
+The Cookie Pusher extension verifies the browser session and writes the bundle
+with one GitHub Secrets API request, avoiding split-brain cookie updates.
+
+The daily workflow runs `python -m src.preflight` before solution database
+downloads or Gemini calls. A blocked/challenged runner fails closed; it does
+not proceed to submission. Optional mobile alerts can be enabled with
+`TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`, or `DISCORD_WEBHOOK_URL`.
+These are separate repository Actions secrets and are never handled by the
+Cookie Pusher extension.
+
+A successful preflight checks the protected problem page and authenticated
+GraphQL identity from the runner. It does not guarantee that LeetCode will
+accept every later write request; sample validation remains mandatory, and
+inconclusive validation never permits submission.

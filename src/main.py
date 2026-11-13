@@ -27,7 +27,8 @@ from .solutions_db import SolutionsDB
 from .bulk_downloader import BulkDownloader
 from .browser_submitter import BrowserSubmitter
 from .email_notifier import EmailNotifier
-from .validation import validate_solution_syntax
+from .validation import validate_solution_syntax, classify_validation_result, ValidationStatus
+from .cookie_bundle import load_cookie_pair
 
 # ── Logging ──────────────────────────────────────────────────────────
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
@@ -109,9 +110,13 @@ class DailySolverPipeline:
                 logger.info("%s fallback passed sample tests.", language)
                 return language, candidate, metadata
             except Exception as exc:
-                # A rate limit is a service-level condition, not a bad solution.
-                # Do not hammer LeetCode by trying every language against HTTP 429.
-                if "429" in str(exc) or "Too Many Requests" in str(exc):
+                # Authentication and infrastructure failures are not code failures.
+                # Stop the fallback chain immediately instead of hammering LeetCode.
+                validation_result = classify_validation_result(exception=exc)
+                if validation_result.status in (
+                    ValidationStatus.AUTH_REJECTED,
+                    ValidationStatus.INFRA_INCONCLUSIVE,
+                ):
                     raise
                 logger.warning("%s fallback could not be validated: %s", language, exc)
         return None
@@ -290,11 +295,23 @@ class DailySolverPipeline:
                     try:
                         logger.info(f"Sample validation attempt {validation_attempt}/{self.MAX_SUBMISSION_RETRIES}")
                         run_result = self.browser.run_code(slug, qid, current_candidate, sample_tests, self.lang)
+                        validation_result = classify_validation_result(response=run_result)
                         sample_status = run_result.get("status_msg", "Unknown")
-                        if sample_status == "Accepted":
+                        if validation_result.status == ValidationStatus.PASSED:
                             solution_code = current_candidate
                             validation_passed = True
                             logger.info("Sample tests passed")
+                            break
+                        if validation_result.status in (
+                            ValidationStatus.AUTH_REJECTED,
+                            ValidationStatus.INFRA_INCONCLUSIVE,
+                        ):
+                            result["status"] = (
+                                "auth_rejected"
+                                if validation_result.status == ValidationStatus.AUTH_REJECTED
+                                else "validation_inconclusive"
+                            )
+                            result["error"] = validation_result.reason
                             break
                         if sample_status == "Runtime Error":
                             fallback = self._next_runtime_fallback(
@@ -311,20 +328,17 @@ class DailySolverPipeline:
                             validate_solution_syntax(current_candidate, self.lang)
                     except Exception as exc:
                         logger.exception("Sample validation could not be completed")
-                        if gen_metadata.get("source") in ("bulk_db", "local_cache"):
-                            logger.warning(
-                                "Sample validation run encountered an issue (%s), but solution is from trusted repository source (%s). Proceeding directly to submission.",
-                                exc, gen_metadata.get("source")
-                            )
-                            validation_passed = True
-                            solution_code = current_candidate
-                            break
-                        result["status"] = "validation_failed"
-                        result["error"] = f"Pre-submission validation failed; no submission was made: {exc}"
+                        validation_result = classify_validation_result(exception=exc)
+                        result["status"] = (
+                            "auth_rejected"
+                            if validation_result.status == ValidationStatus.AUTH_REJECTED
+                            else "validation_inconclusive"
+                        )
+                        result["error"] = validation_result.reason
                         break
 
                 if not validation_passed:
-                    if result["status"] != "validation_failed":
+                    if result["status"] not in ("validation_failed", "validation_inconclusive", "auth_rejected"):
                         result["status"] = "validation_failed"
                         result["error"] = f"Solution did not pass sample tests after {self.MAX_SUBMISSION_RETRIES} attempts; no submission was made."
                     self._git_commit_results(result)
@@ -361,24 +375,48 @@ class DailySolverPipeline:
                 try:
                     submission_result = self.browser.poll_submission_result(sub_id)
                 except Exception as exc:
-                    logger.exception(
-                        "Submission %s was created, but its final status could not be verified.",
-                        sub_id,
+                    logger.warning(
+                        "Submission %s status polling failed; attempting GraphQL reconciliation: %s",
+                        sub_id, exc,
                     )
-                    result["status"] = "submitted_unverified"
-                    result["error"] = (
-                        f"LeetCode accepted the submission request and returned ID {sub_id}, "
-                        f"but status verification failed: {exc}. "
-                        "Check this submission in your LeetCode Submissions page. "
-                        "The solver stopped to avoid creating a duplicate submission."
-                    )
-                    result["submission"] = {
-                        "id": sub_id,
-                        "status": "verification_pending",
-                        "language": self.lang,
-                        "attempts": attempt,
+                    reconciled = None
+                    try:
+                        for item in self.lc.get_submission_list(slug, limit=10):
+                            if str(item.get("id")) == str(sub_id):
+                                reconciled = item
+                                break
+                    except Exception as reconcile_exc:
+                        logger.warning("GraphQL submission reconciliation unavailable: %s", reconcile_exc)
+
+                    terminal = {
+                        "Accepted", "Wrong Answer", "Runtime Error", "Compile Error",
+                        "Time Limit Exceeded", "Memory Limit Exceeded",
                     }
-                    break
+                    if reconciled and reconciled.get("statusDisplay") in terminal:
+                        submission_result = {
+                            "state": "SUCCESS",
+                            "status_msg": reconciled.get("statusDisplay"),
+                            "status_runtime": reconciled.get("runtime"),
+                            "status_memory": reconciled.get("memory"),
+                        }
+                        logger.info(
+                            "Submission %s reconciled through GraphQL: %s",
+                            sub_id, reconciled.get("statusDisplay"),
+                        )
+                    else:
+                        result["status"] = "submitted_unverified"
+                        result["error"] = (
+                            f"LeetCode returned submission ID {sub_id}, but REST polling and "
+                            f"GraphQL reconciliation could not confirm a terminal verdict: {exc}. "
+                            "The solver stopped to avoid a duplicate submission."
+                        )
+                        result["submission"] = {
+                            "id": sub_id,
+                            "status": "verification_pending",
+                            "language": self.lang,
+                            "attempts": attempt,
+                        }
+                        break
 
                 status_msg = submission_result.get("status_msg", "Unknown")
 
@@ -496,8 +534,11 @@ class DailySolverPipeline:
 def main():
     """Entry point — reads config from environment variables."""
     # Required environment variables
-    leetcode_session = os.environ.get("LEETCODE_SESSION")
-    leetcode_csrf = os.environ.get("LEETCODE_CSRF_TOKEN")
+    try:
+        leetcode_session, leetcode_csrf = load_cookie_pair()
+    except ValueError as exc:
+        logger.error("%s", exc)
+        sys.exit(1)
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
 
     if not all([leetcode_session, leetcode_csrf, gemini_api_key]):
@@ -551,7 +592,7 @@ def main():
     logger.info("=" * 60)
 
     # Exit with error code if failed
-    if result["status"] in ("error", "failed", "validation_failed", "submitted_unverified"):
+    if result["status"] in ("error", "failed", "validation_failed", "validation_inconclusive", "auth_rejected", "submitted_unverified"):
         sys.exit(1)
 
 
