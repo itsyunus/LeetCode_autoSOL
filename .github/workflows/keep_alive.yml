@@ -42,7 +42,6 @@ jobs:
         id: keepalive
         env:
           LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
-          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
