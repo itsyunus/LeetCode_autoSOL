@@ -42,6 +42,7 @@ jobs:
         id: keepalive
         env:
           LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
+          LEETCODE_COOKIE_BUNDLE: ${{ secrets.LEETCODE_COOKIE_BUNDLE }}
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
           LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -120,6 +121,15 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           ALERT_MESSAGE: "LeetCode session preflight/keep-alive failed. Check the latest GitHub Actions run; if Cloudflare challenged the runner, manually sign in and push a fresh cookie bundle."
+        run: python -m src.notify
+
+      - name: 📲 Mobile alert on keep-alive failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ALERT_MESSAGE: "LeetCode keep-alive failed. Open the latest GitHub Actions run. If Cloudflare challenged the runner, sign in normally and push a fresh cookie bundle from the extension."
         run: python -m src.notify
 
       - name: 📊 Summary
