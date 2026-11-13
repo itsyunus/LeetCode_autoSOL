@@ -212,7 +212,7 @@ class SessionKeeper:
         # Method 1: Check Set-Cookie headers directly
         set_cookies = resp.headers.get("Set-Cookie", "")
         if set_cookies:
-            logger.info(f"  📦 [{endpoint}] Set-Cookie header detected: {set_cookies[:120]}...")
+            logger.info("  📦 [%s] Set-Cookie header detected (cookie values redacted).", endpoint)
 
         # Method 2: Check the session cookie jar (requests auto-updates it)
         for cookie in self.http.cookies:
