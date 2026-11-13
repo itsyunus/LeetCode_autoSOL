@@ -27,9 +27,11 @@ class PreflightTests(unittest.TestCase):
     @patch("src.preflight.requests.Session")
     def test_signed_out_session_is_rejected(self, session_factory):
         client = Mock()
-        page = Mock(status_code=200, text="<html>problem</html>")
+        page = Mock(status_code=200)
+        page.text = "<html>problem</html>"
         page.headers = {"content-type": "text/html"}
         graphql = Mock(status_code=200)
+        graphql.text = '{"data":{"userStatus":{"isSignedIn":false}}}'
         graphql.headers = {"content-type": "application/json"}
         graphql.json.return_value = {"data": {"userStatus": {"isSignedIn": False}}}
         client.get.return_value = page
@@ -43,9 +45,11 @@ class PreflightTests(unittest.TestCase):
     @patch("src.preflight.requests.Session")
     def test_valid_session_passes(self, session_factory):
         client = Mock()
-        page = Mock(status_code=200, text="<html>problem</html>")
+        page = Mock(status_code=200)
+        page.text = "<html>problem</html>"
         page.headers = {"content-type": "text/html"}
         graphql = Mock(status_code=200)
+        graphql.text = '{"data":{"userStatus":{"isSignedIn":true,"username":"sample-user"}}}'
         graphql.headers = {"content-type": "application/json"}
         graphql.json.return_value = {
             "data": {"userStatus": {"isSignedIn": True, "username": "sample-user"}}
