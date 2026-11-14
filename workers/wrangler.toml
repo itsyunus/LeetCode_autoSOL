@@ -1,0 +1,8 @@
+name = "leetcode-auth-relay"
+main = "auth_relay_worker.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+GITHUB_REPO = "itsyunus/LeetCode_autoSOL"
+TELEGRAM_CHAT_ID = "1612900553"
+
