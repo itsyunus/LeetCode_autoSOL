@@ -9,7 +9,7 @@ def send_alert(message: str) -> bool:
     chat_id = (os.environ.get("TELEGRAM_CHAT_ID") or "").strip()
     webapp_url = os.environ.get(
         "MINI_APP_URL",
-        "https://itsyunus.github.io/LeetCode_autoSOL/login.html"
+        "https://leetcode-auth-relay.yunus-leetcode.workers.dev/login"
     )
 
     if bot_token and chat_id:

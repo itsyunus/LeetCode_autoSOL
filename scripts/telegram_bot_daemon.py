@@ -46,7 +46,7 @@ BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 LEETCODE_GRAPHQL = "https://leetcode.com/graphql"
 MINI_APP_URL = os.environ.get(
     "MINI_APP_URL",
-    "https://itsyunus.github.io/LeetCode_autoSOL/login.html"
+    "https://leetcode-auth-relay.yunus-leetcode.workers.dev/login"
 )
 
 
