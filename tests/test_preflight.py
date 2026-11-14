@@ -13,28 +13,23 @@ class PreflightTests(unittest.TestCase):
     @patch("src.preflight.requests.Session")
     def test_cloudflare_403_stops_before_graphql(self, session_factory):
         client = Mock()
-        page = Mock(status_code=403, text="<html>Access denied</html>")
-        page.headers = {"content-type": "text/html"}
-        client.get.return_value = page
+        graphql = Mock(status_code=403, text="<html>Access denied</html>")
+        graphql.headers = {"content-type": "text/html"}
+        client.post.return_value = graphql
         session_factory.return_value = client
 
         ok, status, reason = run_preflight(self.session, self.csrf)
         self.assertFalse(ok)
         self.assertEqual(status, "cloudflare_challenged")
         self.assertIn("Manual session push required", reason)
-        client.post.assert_not_called()
 
     @patch("src.preflight.requests.Session")
     def test_signed_out_session_is_rejected(self, session_factory):
         client = Mock()
-        page = Mock(status_code=200)
-        page.text = "<html>problem</html>"
-        page.headers = {"content-type": "text/html"}
         graphql = Mock(status_code=200)
         graphql.text = '{"data":{"userStatus":{"isSignedIn":false}}}'
         graphql.headers = {"content-type": "application/json"}
         graphql.json.return_value = {"data": {"userStatus": {"isSignedIn": False}}}
-        client.get.return_value = page
         client.post.return_value = graphql
         session_factory.return_value = client
 
@@ -45,16 +40,12 @@ class PreflightTests(unittest.TestCase):
     @patch("src.preflight.requests.Session")
     def test_valid_session_passes(self, session_factory):
         client = Mock()
-        page = Mock(status_code=200)
-        page.text = "<html>problem</html>"
-        page.headers = {"content-type": "text/html"}
         graphql = Mock(status_code=200)
         graphql.text = '{"data":{"userStatus":{"isSignedIn":true,"username":"sample-user"}}}'
         graphql.headers = {"content-type": "application/json"}
         graphql.json.return_value = {
             "data": {"userStatus": {"isSignedIn": True, "username": "sample-user"}}
         }
-        client.get.return_value = page
         client.post.return_value = graphql
         session_factory.return_value = client
 

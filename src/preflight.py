@@ -10,7 +10,6 @@ import requests
 
 BASE = "https://leetcode.com"
 GRAPHQL = BASE + "/graphql"
-PROBLEM_URL = BASE + "/problems/two-sum/"
 USER_STATUS_QUERY = "query { userStatus { isSignedIn username } }"
 CHALLENGE_MARKERS = (
     "just a moment",
@@ -18,6 +17,12 @@ CHALLENGE_MARKERS = (
     "challenge-platform",
     "attention required",
     "verify you are human",
+)
+
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
 )
 
 
@@ -39,36 +44,19 @@ def run_preflight(session_token: str, csrf_token: str) -> tuple[bool, str, str]:
     client = requests.Session()
     client.cookies.set("LEETCODE_SESSION", session_token, domain=".leetcode.com")
     client.cookies.set("csrftoken", csrf_token, domain=".leetcode.com")
-    headers = {
+    client.headers.update({
+        "User-Agent": BROWSER_USER_AGENT,
         "Origin": BASE,
-        "Referer": PROBLEM_URL,
+        "Referer": BASE + "/",
         "X-CSRFToken": csrf_token,
         "Content-Type": "application/json",
         "Accept": "application/json, text/plain, */*",
-    }
+    })
 
     try:
-        page = client.get(PROBLEM_URL, headers={"Referer": BASE + "/"}, timeout=20)
-        if page.status_code in (403, 503) or _is_challenge(page):
-            return False, "cloudflare_challenged", (
-                "Cloudflare challenged the GitHub Actions runner. "
-                "Manual session push required."
-            )
-        if page.status_code in (401,):
-            return False, "auth_rejected", "LeetCode rejected the session cookie."
-        if page.status_code >= 500 or page.status_code == 429:
-            return False, "infra_inconclusive", (
-                f"LeetCode preflight temporarily unavailable (HTTP {page.status_code})."
-            )
-        if page.status_code != 200:
-            return False, "infra_inconclusive", (
-                f"LeetCode problem-page preflight returned HTTP {page.status_code}."
-            )
-
         response = client.post(
             GRAPHQL,
             json={"query": USER_STATUS_QUERY},
-            headers=headers,
             timeout=20,
         )
         if response.status_code in (403, 503) or _is_challenge(response):
