@@ -44,10 +44,14 @@ if not GH_PAT:
 
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 LEETCODE_GRAPHQL = "https://leetcode.com/graphql"
+MINI_APP_URL = os.environ.get(
+    "MINI_APP_URL",
+    "https://itsyunus.github.io/LeetCode_autoSOL/login.html"
+)
 
 
-def send_reply(chat_id: int, text: str):
-    """Send HTML reply back to the Telegram user."""
+def send_reply(chat_id: int, text: str, reply_markup: dict = None):
+    """Send HTML reply back to the Telegram user, optionally with inline keyboard."""
     url = f"{BASE_URL}/sendMessage"
     payload = {
         "chat_id": chat_id,
@@ -55,10 +59,27 @@ def send_reply(chat_id: int, text: str):
         "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
     try:
         requests.post(url, json=payload, timeout=10)
     except Exception as e:
         logger.error(f"Failed to send reply: {e}")
+
+
+def send_login_miniapp_button(chat_id: int, text: str):
+    """Sends a message with an inline button that opens the Telegram Mini App."""
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "🔐 Open LeetCode Login Mini App",
+                    "web_app": {"url": MINI_APP_URL}
+                }
+            ]
+        ]
+    }
+    send_reply(chat_id, text, reply_markup=keyboard)
 
 
 def validate_leetcode_cookies(session_token: str, csrf_token: str) -> tuple[bool, str]:
@@ -242,6 +263,14 @@ def handle_message(chat_id: int, text: str):
             send_reply(chat_id, f"❌ Failed to dispatch workflow: {msg}")
         return
 
+    if text_clean.startswith("/login") or text_clean.startswith("/renew"):
+        send_login_miniapp_button(
+            chat_id,
+            "🔐 <b>LeetCode Session Renewal Mini App</b>\n\n"
+            "Tap the button below to open the mobile portal inside Telegram. Sign in and tap Transmit to automatically refresh your solver."
+        )
+        return
+
     # Check if user sent cookies
     if "LEETCODE_SESSION" in text or len(text.strip().split()) >= 1 and len(text.strip()) > 50:
         handle_cookie_update(chat_id, text)
@@ -250,8 +279,25 @@ def handle_message(chat_id: int, text: str):
     send_reply(
         chat_id,
         "🤖 <i>Unrecognized command.</i>\n\n"
-        "Try <code>/status</code>, <code>/test</code>, or paste your <code>LEETCODE_SESSION</code> cookie string here to update.",
+        "Try <code>/status</code>, <code>/test</code>, <code>/login</code>, or paste your <code>LEETCODE_SESSION</code> cookie string here to update.",
     )
+
+
+def handle_web_app_data(chat_id: int, raw_json_data: str):
+    """Handle data submitted from Telegram Mini App."""
+    logger.info(f"Received web_app_data: {raw_json_data[:40]}...")
+    try:
+        data = json.loads(raw_json_data)
+        session = data.get("session", "")
+        csrf = data.get("csrf", "")
+        if session:
+            cookie_str = f"LEETCODE_SESSION={session}; csrftoken={csrf}"
+            handle_cookie_update(chat_id, cookie_str)
+        else:
+            send_reply(chat_id, "❌ Mini App submitted empty session.")
+    except Exception as exc:
+        logger.error(f"Failed to parse web_app_data: {exc}")
+        handle_cookie_update(chat_id, raw_json_data)
 
 
 def main():
@@ -267,17 +313,20 @@ def main():
                 offset = item["update_id"] + 1
                 msg = item.get("message", {})
                 chat_id = msg.get("chat", {}).get("id")
+
+                if not chat_id or chat_id != AUTHORIZED_CHAT_ID:
+                    continue
+
+                # Handle WebApp data
+                if "web_app_data" in msg:
+                    web_data = msg["web_app_data"].get("data", "")
+                    handle_web_app_data(chat_id, web_data)
+                    continue
+
                 text = msg.get("text", "")
-
-                if not chat_id or not text:
-                    continue
-
-                if chat_id != AUTHORIZED_CHAT_ID:
-                    logger.warning(f"Unauthorized chat_id {chat_id} ignored.")
-                    continue
-
-                logger.info(f"Received message from {chat_id}: {text[:30]}...")
-                handle_message(chat_id, text)
+                if text:
+                    logger.info(f"Received message from {chat_id}: {text[:30]}...")
+                    handle_message(chat_id, text)
 
         except Exception as exc:
             logger.error(f"Polling loop error: {exc}")
