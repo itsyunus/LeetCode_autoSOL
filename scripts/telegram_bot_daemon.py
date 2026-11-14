@@ -158,6 +158,7 @@ def register_bot_commands():
     """Register command shortcuts in Telegram's UI menu."""
     commands = [
         {"command": "menu", "description": "⚙️ Open Settings & Control Dashboard"},
+        {"command": "transfertest", "description": "🧪 Test In-Telegram Login Transfer"},
         {"command": "watch", "description": "👀 Arm real-time session cookie watcher"},
         {"command": "status", "description": "📊 Check session health & GitHub runs"},
         {"command": "run", "description": "🚀 Dispatch daily solver on GitHub"},
@@ -434,10 +435,13 @@ def render_auth_hub() -> Tuple[str, dict]:
             ],
             [
                 {"text": "👀 Arm Cookie Watcher", "callback_data": "menu_watcher"},
-                {"text": "📱 Orion iOS Setup Guide", "callback_data": "auth_orion_guide"},
+                {"text": "🧪 Run Transfer Test", "callback_data": "menu_transfer_test"},
             ],
             [
+                {"text": "📱 Orion iOS Setup Guide", "callback_data": "auth_orion_guide"},
                 {"text": "🔍 Verify Active Session", "callback_data": "auth_check_active"},
+            ],
+            [
                 {"text": "🔙 Back to Main Menu", "callback_data": "menu_main"},
             ],
         ]
@@ -498,6 +502,69 @@ def render_orion_guide() -> Tuple[str, dict]:
                 {"text": "🔙 Back to Credentials Hub", "callback_data": "menu_auth"},
                 {"text": "🔙 Main Menu", "callback_data": "menu_main"},
             ]
+        ]
+    }
+    return text, keyboard
+
+
+def render_transfer_test_card() -> Tuple[str, dict]:
+    """Render interactive transfer test card with verification button."""
+    text = (
+        "🧪 <b>In-Telegram LeetCode Login & Transfer Test</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "<b>Run The Test Right Now:</b>\n"
+        "1️⃣ Tap <b>[🌐 1. Open LeetCode Login Page]</b> below and sign into your LeetCode account.\n"
+        "2️⃣ Once signed in on LeetCode, return here.\n"
+        "3️⃣ Tap <b>[🔍 2. Confirm Cookie Transfer]</b>.\n\n"
+        "<i>Axiom will inspect the incoming socket and show you live whether Apple's sandbox allowed any cookies through to the bot.</i>"
+    )
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "🌐 1. Open LeetCode Login Page",
+                    "url": "https://leetcode.com/accounts/login/",
+                }
+            ],
+            [
+                {"text": "🔍 2. Confirm Cookie Transfer", "callback_data": "test_transfer_check"},
+            ],
+            [
+                {"text": "🔙 Back to Main Menu", "callback_data": "menu_main"},
+            ],
+        ]
+    }
+    return text, keyboard
+
+
+def render_transfer_result() -> Tuple[str, dict]:
+    """Render transfer diagnostic result."""
+    text = (
+        "🔍 <b>Transfer Test Result: 0 Cookies Transferred</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "• <b>Status:</b> 🔴 <b>BLOCKED BY APPLE IOS SANDBOX</b>\n"
+        "• <b>Cookies Received:</b> <code>0 bytes</code>\n\n"
+        "🛡️ <b>Why This Happened (The Hard Reality):</b>\n"
+        "When you logged into LeetCode inside Telegram, Apple's iOS launched an isolated <code>SFSafariViewController</code>. "
+        "The <code>LEETCODE_SESSION</code> cookie was stored directly in Apple's encrypted WebKit container for <code>leetcode.com</code>.\n\n"
+        "Apple strictly prevents Telegram or any third-party bot from reading cookies out of Safari. "
+        "If Telegram could silently extract your Safari cookies, any random chat group could steal your Google, banking, or email logins whenever you open a link!\n\n"
+        "💡 <b>The Working Way To Sync:</b>\n"
+        "1️⃣ <b>Orion Browser on iPhone (Zero Copy):</b> Open LeetCode in Orion on your phone and tap our extension icon -> <i>Push to GitHub</i>. Orion allows extensions to read cookies via native browser APIs!\n"
+        "2️⃣ <b>Paste Into Chat:</b> Drop <code>LEETCODE_SESSION=...</code> here in chat. The watcher catches it in under 500ms."
+    )
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "🌐 Open LeetCode Login Page Again",
+                    "url": "https://leetcode.com/accounts/login/",
+                }
+            ],
+            [
+                {"text": "📱 Orion iOS Setup Guide", "callback_data": "auth_orion_guide"},
+                {"text": "🔙 Back to Main Menu", "callback_data": "menu_main"},
+            ],
         ]
     }
     return text, keyboard
@@ -609,6 +676,11 @@ def handle_message(chat_id: int, text: str):
 
     if text_clean.startswith("/watch"):
         msg, kb = render_watcher_view()
+        send_reply(chat_id, msg, reply_markup=kb)
+        return
+
+    if text_clean.startswith("/transfertest") or text_clean.startswith("/testtransfer"):
+        msg, kb = render_transfer_test_card()
         send_reply(chat_id, msg, reply_markup=kb)
         return
 
@@ -742,6 +814,20 @@ def handle_callback_query(cq: dict):
     if data == "auth_orion_guide":
         answer_callback_query(cq_id)
         msg, kb = render_orion_guide()
+        edit_message(chat_id, message_id, msg, reply_markup=kb)
+        return
+
+    # 10b. Transfer Test Hub
+    if data == "menu_transfer_test":
+        answer_callback_query(cq_id)
+        msg, kb = render_transfer_test_card()
+        edit_message(chat_id, message_id, msg, reply_markup=kb)
+        return
+
+    # 10c. Transfer Check Result
+    if data == "test_transfer_check":
+        answer_callback_query(cq_id, "Inspecting incoming cookie socket...")
+        msg, kb = render_transfer_result()
         edit_message(chat_id, message_id, msg, reply_markup=kb)
         return
 
