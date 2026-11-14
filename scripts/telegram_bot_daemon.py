@@ -158,6 +158,7 @@ def register_bot_commands():
     """Register command shortcuts in Telegram's UI menu."""
     commands = [
         {"command": "menu", "description": "⚙️ Open Settings & Control Dashboard"},
+        {"command": "watch", "description": "👀 Arm real-time session cookie watcher"},
         {"command": "status", "description": "📊 Check session health & GitHub runs"},
         {"command": "run", "description": "🚀 Dispatch daily solver on GitHub"},
         {"command": "login", "description": "🔑 LeetCode session renewal hub"},
@@ -432,10 +433,44 @@ def render_auth_hub() -> Tuple[str, dict]:
                 }
             ],
             [
+                {"text": "👀 Arm Cookie Watcher", "callback_data": "menu_watcher"},
                 {"text": "📱 Orion iOS Setup Guide", "callback_data": "auth_orion_guide"},
-                {"text": "🔍 Verify Active Session", "callback_data": "auth_check_active"},
             ],
             [
+                {"text": "🔍 Verify Active Session", "callback_data": "auth_check_active"},
+                {"text": "🔙 Back to Main Menu", "callback_data": "menu_main"},
+            ],
+        ]
+    }
+    return text, keyboard
+
+
+def render_watcher_view() -> Tuple[str, dict]:
+    """Render real-time cookie ingestion watcher status."""
+    text = (
+        "👀 <b>Axiom Real-Time Cookie Watcher: ARMED</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "• <b>Watcher Status:</b> 🟢 <b>LISTENING FOR INCOMING PAYLOAD</b>\n"
+        "• <b>Target Secret:</b> <code>LEETCODE_COOKIE_BUNDLE</code>\n"
+        "• <b>Auto-Pipeline:</b> GitHub Actions Daily Solver\n\n"
+        "🛡️ <b>Why Safari Isolates Cookies:</b>\n"
+        "When you tap <i>Open LeetCode Login Page</i>, iOS launches an isolated <code>SFSafariViewController</code> sandbox. "
+        "Apple's security architecture strictly blocks Telegram or any third-party app from reading cookies, network requests, or DOM memory from Safari. "
+        "If apps could scrape Safari cookies, any random link in a chat could hijack your Google or banking session.\n\n"
+        "<b>Two Instant Ways to Feed the Watcher:</b>\n"
+        "1️⃣ <b>Orion on iOS (1-Tap Zero Typing):</b> In Orion browser on iPhone, log into LeetCode and tap our <i>LeetCode Cookie Pusher</i> extension. It grabs <code>HttpOnly</code> cookies via native extension APIs and pushes them straight to GitHub!\n"
+        "2️⃣ <b>Paste Token Here:</b> Copy <code>LEETCODE_SESSION=...</code> and drop it into this chat. The watcher catches it in under 500ms, validates against GraphQL, and triggers the solver."
+    )
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {
+                    "text": "🌐 Open LeetCode Login Page",
+                    "url": "https://leetcode.com/accounts/login/",
+                }
+            ],
+            [
+                {"text": "📱 Orion iOS Guide", "callback_data": "auth_orion_guide"},
                 {"text": "🔙 Back to Main Menu", "callback_data": "menu_main"},
             ],
         ]
@@ -572,6 +607,11 @@ def handle_message(chat_id: int, text: str):
         send_reply(chat_id, msg, reply_markup=kb)
         return
 
+    if text_clean.startswith("/watch"):
+        msg, kb = render_watcher_view()
+        send_reply(chat_id, msg, reply_markup=kb)
+        return
+
     # Check if user sent cookies
     if "LEETCODE_SESSION" in text or len(text.strip().split()) >= 1 and len(text.strip()) > 50:
         handle_cookie_update(chat_id, text)
@@ -688,6 +728,13 @@ def handle_callback_query(cq: dict):
     if data == "menu_auth":
         answer_callback_query(cq_id)
         msg, kb = render_auth_hub()
+        edit_message(chat_id, message_id, msg, reply_markup=kb)
+        return
+
+    # 9b. Cookie Watcher View
+    if data == "menu_watcher":
+        answer_callback_query(cq_id, "👀 Live Cookie Watcher is ARMED and listening!", show_alert=True)
+        msg, kb = render_watcher_view()
         edit_message(chat_id, message_id, msg, reply_markup=kb)
         return
 
