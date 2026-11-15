@@ -122,15 +122,6 @@ jobs:
           ALERT_MESSAGE: "LeetCode session preflight/keep-alive failed. Check the latest GitHub Actions run; if Cloudflare challenged the runner, manually sign in and push a fresh cookie bundle."
         run: python -m src.notify
 
-      - name: 📲 Mobile alert on keep-alive failure
-        if: failure()
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          ALERT_MESSAGE: "LeetCode keep-alive failed. Open the latest GitHub Actions run. If Cloudflare challenged the runner, sign in normally and push a fresh cookie bundle from the extension."
-        run: python -m src.notify
-
       - name: 📊 Summary
         if: always()
         run: |
@@ -138,7 +129,7 @@ jobs:
             echo "## 🫀 Session Keep-Alive"
             echo ""
             if [ "${{ steps.keepalive.outcome }}" = "success" ]; then
-              echo "✅ **Session is alive.** Cookies probed and any rotations captured."
+              echo "✅ **Session is alive.** Cookies probed; verified rotations captured when available."
             else
               echo "⚠️ **Session check failed.** Inspect logs: login expiry, network/API failure, or secret-update permission failure."
               echo ""
@@ -147,5 +138,5 @@ jobs:
             fi
             echo ""
             echo "- Run: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-            echo "- Schedule: Every hour on GitHub-hosted runners (24x/day; health check only)"
+            echo "- Schedule: Every hour on GitHub-hosted runners (24x/day; health check only, not a session renewal)"
           } >> "$GITHUB_STEP_SUMMARY"
