@@ -39,12 +39,23 @@
         "frontend_id": "3105",
         "source": "bulk_db"
       }
+    },
+    "number-of-sub-arrays-with-odd-sum": {
+      "file": "1524_number-of-sub-arrays-with-odd-sum.py",
+      "question_id": "1631",
+      "title": "Number of Sub-arrays With Odd Sum",
+      "difficulty": "Medium",
+      "solved_at": "2026-11-15T01:54:28.478369+00:00",
+      "metadata": {
+        "frontend_id": "1524",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 3,
+    "total": 4,
     "easy": 1,
-    "medium": 1,
+    "medium": 2,
     "hard": 1
   }
 }

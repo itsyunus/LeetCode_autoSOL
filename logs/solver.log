@@ -391,3 +391,31 @@ RuntimeError: Run returned 403
 2026-11-13 03:15:53,605 [INFO] src.bulk_downloader: 📦 DB hit: count-non-decreasing-subarrays-after-k-operations [python3] from walkccc/LeetCode
 2026-11-13 03:15:53,605 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
 2026-11-13 03:15:53,606 [INFO] leetcode-auto-solver: DRY RUN — skipping submission
+2026-11-15 01:54:09,707 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-15 01:54:09,710 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-15 01:54:09,710 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-15 01:54:09,710 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-15 01:54:09,711 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-15 01:54:09,715 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-15 01:54:09,735 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-15 01:54:09,736 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-15 01:54:09,737 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-15 01:54:09,737 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-15 01:54:09,737 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-15 01:54:12,554 [INFO] leetcode-auto-solver: ============================================================
+2026-11-15 01:54:12,554 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-15 01:54:12,554 [INFO] leetcode-auto-solver: ============================================================
+2026-11-15 01:54:13,039 [INFO] src.leetcode_api: Daily challenge: [1524] Number of Sub-arrays With Odd Sum (Medium)
+2026-11-15 01:54:13,039 [INFO] leetcode-auto-solver: 📋 Daily Problem: [1524] Number of Sub-arrays With Odd Sum (Medium)
+2026-11-15 01:54:13,541 [INFO] src.leetcode_api: Fetched details for: Number of Sub-arrays With Odd Sum
+2026-11-15 01:54:13,541 [INFO] src.bulk_downloader: 📦 DB hit: number-of-sub-arrays-with-odd-sum [python3] from kamyu104/LeetCode-Solutions
+2026-11-15 01:54:13,541 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-15 01:54:13,542 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-15 01:54:14,180 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-15 01:54:21,177 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-15 01:54:21,177 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-15 01:54:21,212 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/number-of-sub-arrays-with-odd-sum/...
+2026-11-15 01:54:24,439 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2196253853
+2026-11-15 01:54:28,472 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 84 ms, Memory: 24.6 MB
+2026-11-15 01:54:28,478 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
+2026-11-15 01:54:28,479 [INFO] src.solutions_db: Saved solution: 1524_number-of-sub-arrays-with-odd-sum.py
