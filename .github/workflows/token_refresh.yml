@@ -6,7 +6,7 @@
 # is now handled by the keep-alive system:
 #
 #   • .github/workflows/keep_alive.yml — pings LeetCode GraphQL
-#     every 6 hours to prevent session expiry & captures any
+#     hourly to verify the session and captures any
 #     rotated cookies automatically.
 #
 #   • src/session_keeper.py — the engine that probes the session,
