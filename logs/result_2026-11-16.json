@@ -1,0 +1,18 @@
+{
+  "status": "dry_run",
+  "date": "2026-11-16T12:56:27.971361+00:00",
+  "problem": {
+    "id": "2243",
+    "title": "Calculate Digit Sum of a String",
+    "slug": "calculate-digit-sum-of-a-string",
+    "difficulty": "Easy",
+    "date": "2026-11-16",
+    "tags": [
+      "String",
+      "Simulation"
+    ]
+  },
+  "submission": null,
+  "error": null,
+  "solution_code": "class Solution:\n  def digitSum(self, s: str, k: int) -> str:\n    while len(s) > k:\n      next = []\n      for i in range(0, len(s), k):\n        summ = 0\n        for j in range(i, min(len(s), i + k)):\n          summ += int(s[j])\n        next.append(str(summ))\n      s = ''.join(next)\n    return s\n"
+}
