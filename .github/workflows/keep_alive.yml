@@ -11,9 +11,11 @@
 name: 🫀 Session Keep-Alive
 
 on:
-  schedule:
-    # Every hour on GitHub-hosted runners
-    - cron: "0 * * * *"
+  # Disabled hourly schedule: hammering LeetCode from 24 different Azure datacenter IPs
+  # per day flags concurrent geo-velocity on Cloudflare and triggers server-side session revocation.
+  # Manual dispatch is kept for on-demand verification.
+  # schedule:
+  #   - cron: "0 * * * *"
 
   workflow_dispatch:
 

@@ -16,10 +16,13 @@ def send_alert(message: str) -> bool:
         import html
         escaped_msg = html.escape(message)
         text_payload = (
-            f"🚨 <b>LeetCode Session Alert</b>\n\n"
-            f"• <b>Status:</b> Session Expired\n"
-            f"• <b>Details:</b> <code>{escaped_msg}</code>\n\n"
-            f"Tap the button below to sign in and automatically renew your session."
+            f"🚨 <b>LEETCODE STREAK AT RISK!</b>\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"• <b>Status:</b> ⚠️ Daily Solve Pipeline Failed\n"
+            f"• <b>Diagnostic:</b> <code>{escaped_msg}</code>\n\n"
+            f"⚠️ <b>Action Required:</b> Your daily streak is at risk!\n\n"
+            f"• Open LeetCode and solve today's challenge to save your streak, or\n"
+            f"• Paste your fresh <code>LEETCODE_SESSION=...</code> right into this chat to trigger an automatic retry."
         )
 
         telegram_payload = {
@@ -30,8 +33,8 @@ def send_alert(message: str) -> bool:
                 "inline_keyboard": [
                     [
                         {
-                            "text": "🔐 Log In & Renew Session",
-                            "web_app": {"url": webapp_url}
+                            "text": "🌐 Open LeetCode Today",
+                            "url": "https://leetcode.com/problemset/all/",
                         }
                     ]
                 ]
