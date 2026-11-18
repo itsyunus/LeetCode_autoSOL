@@ -525,3 +525,31 @@ RuntimeError: Run returned 403
     at eval (eval at evaluate (:370:30), <anonymous>:9:31)
     at async <anonymous>:381:23
 2026-11-17 05:57:17,096 [WARNING] leetcode-auto-solver: Submission 2197779016 status polling failed; attempting GraphQL reconciliation: Could not verify submission 2197779016 after 20 polls; the submission may still be processing
+2026-11-18 07:53:44,634 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-18 07:53:44,636 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-18 07:53:44,636 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-18 07:53:44,637 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-18 07:53:44,638 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-18 07:53:44,642 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-18 07:53:44,662 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-18 07:53:44,663 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-18 07:53:44,664 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-18 07:53:44,664 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-18 07:53:44,664 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-18 07:53:47,873 [INFO] leetcode-auto-solver: ============================================================
+2026-11-18 07:53:47,873 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-18 07:53:47,873 [INFO] leetcode-auto-solver: ============================================================
+2026-11-18 07:53:48,035 [INFO] src.leetcode_api: Daily challenge: [2914] Minimum Number of Changes to Make Binary String Beautiful (Medium)
+2026-11-18 07:53:48,035 [INFO] leetcode-auto-solver: 📋 Daily Problem: [2914] Minimum Number of Changes to Make Binary String Beautiful (Medium)
+2026-11-18 07:53:48,261 [INFO] src.leetcode_api: Fetched details for: Minimum Number of Changes to Make Binary String Beautiful
+2026-11-18 07:53:48,261 [INFO] src.bulk_downloader: 📦 DB hit: minimum-number-of-changes-to-make-binary-string-beautiful [python3] from walkccc/LeetCode
+2026-11-18 07:53:48,261 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-18 07:53:48,262 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-18 07:53:48,981 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-18 07:53:55,645 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-18 07:53:55,645 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-18 07:53:55,690 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/minimum-number-of-changes-to-make-binary-string-beautiful/...
+2026-11-18 07:53:59,025 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2198543844
+2026-11-18 07:54:02,419 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 14 ms, Memory: 19.7 MB
+2026-11-18 07:54:02,429 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
+2026-11-18 07:54:02,431 [INFO] src.solutions_db: Saved solution: 2914_minimum-number-of-changes-to-make-binary-string-beautiful.py

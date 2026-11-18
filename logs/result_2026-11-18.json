@@ -1,0 +1,24 @@
+{
+  "status": "accepted",
+  "date": "2026-11-18T07:53:47.873689+00:00",
+  "problem": {
+    "id": "2914",
+    "title": "Minimum Number of Changes to Make Binary String Beautiful",
+    "slug": "minimum-number-of-changes-to-make-binary-string-beautiful",
+    "difficulty": "Medium",
+    "date": "2026-11-18",
+    "tags": [
+      "String"
+    ]
+  },
+  "submission": {
+    "id": 2198543844,
+    "runtime": "14 ms",
+    "memory": "19.7 MB",
+    "runtime_percentile": 98.0263,
+    "memory_percentile": 53.2894,
+    "attempts": 1,
+    "language": "python3"
+  },
+  "error": null
+}

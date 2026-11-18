@@ -9169,6 +9169,34 @@
     "source": "kamyu104/LeetCode-Solutions",
     "title": "Count Valid Substrings Ii"
   },
+  "count-valid-suffix-sorts-i": {
+    "file": "code/count-valid-suffix-sorts-i.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/count-valid-suffix-sorts-i.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "count-valid-suffix-sorts-i",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Count Valid Suffix Sorts I"
+  },
+  "count-valid-suffix-sorts-ii": {
+    "file": "code/count-valid-suffix-sorts-ii.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/count-valid-suffix-sorts-ii.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "count-valid-suffix-sorts-ii",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Count Valid Suffix Sorts Ii"
+  },
   "count-valid-word-occurrences": {
     "file": "code/count-valid-word-occurrences.py",
     "id": "0",

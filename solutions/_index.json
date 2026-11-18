@@ -50,12 +50,23 @@
         "frontend_id": "1524",
         "source": "bulk_db"
       }
+    },
+    "minimum-number-of-changes-to-make-binary-string-beautiful": {
+      "file": "2914_minimum-number-of-changes-to-make-binary-string-beautiful.py",
+      "question_id": "3174",
+      "title": "Minimum Number of Changes to Make Binary String Beautiful",
+      "difficulty": "Medium",
+      "solved_at": "2026-11-18T07:54:02.430823+00:00",
+      "metadata": {
+        "frontend_id": "2914",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 4,
+    "total": 5,
     "easy": 1,
-    "medium": 2,
+    "medium": 3,
     "hard": 1
   }
 }
