@@ -1,0 +1,26 @@
+{
+  "status": "accepted",
+  "date": "2026-11-19T07:49:48.700779+00:00",
+  "problem": {
+    "id": "2567",
+    "title": "Minimum Score by Changing Two Elements",
+    "slug": "minimum-score-by-changing-two-elements",
+    "difficulty": "Medium",
+    "date": "2026-11-19",
+    "tags": [
+      "Array",
+      "Greedy",
+      "Sorting"
+    ]
+  },
+  "submission": {
+    "id": 2199198181,
+    "runtime": "32 ms",
+    "memory": "31.4 MB",
+    "runtime_percentile": 77.47749999999999,
+    "memory_percentile": 26.126199999999976,
+    "attempts": 1,
+    "language": "python3"
+  },
+  "error": null
+}

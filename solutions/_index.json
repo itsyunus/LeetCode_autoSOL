@@ -61,12 +61,23 @@
         "frontend_id": "2914",
         "source": "bulk_db"
       }
+    },
+    "minimum-score-by-changing-two-elements": {
+      "file": "2567_minimum-score-by-changing-two-elements.py",
+      "question_id": "2706",
+      "title": "Minimum Score by Changing Two Elements",
+      "difficulty": "Medium",
+      "solved_at": "2026-11-19T07:50:04.459300+00:00",
+      "metadata": {
+        "frontend_id": "2567",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 5,
+    "total": 6,
     "easy": 1,
-    "medium": 3,
+    "medium": 4,
     "hard": 1
   }
 }

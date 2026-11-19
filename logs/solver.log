@@ -553,3 +553,31 @@ RuntimeError: Run returned 403
 2026-11-18 07:54:02,419 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 14 ms, Memory: 19.7 MB
 2026-11-18 07:54:02,429 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
 2026-11-18 07:54:02,431 [INFO] src.solutions_db: Saved solution: 2914_minimum-number-of-changes-to-make-binary-string-beautiful.py
+2026-11-19 07:49:45,507 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-19 07:49:45,508 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-19 07:49:45,508 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-19 07:49:45,508 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-19 07:49:45,509 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-19 07:49:45,511 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-19 07:49:45,532 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-19 07:49:45,532 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-19 07:49:45,532 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-19 07:49:45,533 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-19 07:49:45,533 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-19 07:49:48,700 [INFO] leetcode-auto-solver: ============================================================
+2026-11-19 07:49:48,700 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-19 07:49:48,701 [INFO] leetcode-auto-solver: ============================================================
+2026-11-19 07:49:49,503 [INFO] src.leetcode_api: Daily challenge: [2567] Minimum Score by Changing Two Elements (Medium)
+2026-11-19 07:49:49,504 [INFO] leetcode-auto-solver: 📋 Daily Problem: [2567] Minimum Score by Changing Two Elements (Medium)
+2026-11-19 07:49:50,179 [INFO] src.leetcode_api: Fetched details for: Minimum Score by Changing Two Elements
+2026-11-19 07:49:50,180 [INFO] src.bulk_downloader: 📦 DB hit: minimum-score-by-changing-two-elements [python3] from walkccc/LeetCode
+2026-11-19 07:49:50,180 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-19 07:49:50,180 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-19 07:49:50,617 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-19 07:49:57,629 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-19 07:49:57,630 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-19 07:49:57,667 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/minimum-score-by-changing-two-elements/...
+2026-11-19 07:50:00,906 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2199198181
+2026-11-19 07:50:04,454 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 32 ms, Memory: 31.4 MB
+2026-11-19 07:50:04,459 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
+2026-11-19 07:50:04,459 [INFO] src.solutions_db: Saved solution: 2567_minimum-score-by-changing-two-elements.py
