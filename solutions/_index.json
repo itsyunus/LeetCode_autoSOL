@@ -72,12 +72,23 @@
         "frontend_id": "2567",
         "source": "bulk_db"
       }
+    },
+    "maximize-consecutive-elements-in-an-array-after-modification": {
+      "file": "3041_maximize-consecutive-elements-in-an-array-after-modification.py",
+      "question_id": "3298",
+      "title": "Maximize Consecutive Elements in an Array After Modification",
+      "difficulty": "Hard",
+      "solved_at": "2026-11-20T07:42:48.094464+00:00",
+      "metadata": {
+        "frontend_id": "3041",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 6,
+    "total": 7,
     "easy": 1,
     "medium": 4,
-    "hard": 1
+    "hard": 2
   }
 }

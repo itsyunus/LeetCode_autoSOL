@@ -1,0 +1,26 @@
+{
+  "status": "accepted",
+  "date": "2026-11-20T07:42:32.233995+00:00",
+  "problem": {
+    "id": "3041",
+    "title": "Maximize Consecutive Elements in an Array After Modification",
+    "slug": "maximize-consecutive-elements-in-an-array-after-modification",
+    "difficulty": "Hard",
+    "date": "2026-11-20",
+    "tags": [
+      "Array",
+      "Dynamic Programming",
+      "Sorting"
+    ]
+  },
+  "submission": {
+    "id": 2199835828,
+    "runtime": "244 ms",
+    "memory": "43.1 MB",
+    "runtime_percentile": 35.713699999999896,
+    "memory_percentile": 47.142799999999966,
+    "attempts": 1,
+    "language": "python3"
+  },
+  "error": null
+}

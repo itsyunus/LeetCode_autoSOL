@@ -581,3 +581,31 @@ RuntimeError: Run returned 403
 2026-11-19 07:50:04,454 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 32 ms, Memory: 31.4 MB
 2026-11-19 07:50:04,459 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
 2026-11-19 07:50:04,459 [INFO] src.solutions_db: Saved solution: 2567_minimum-score-by-changing-two-elements.py
+2026-11-20 07:42:28,475 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-20 07:42:28,476 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-20 07:42:28,476 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-20 07:42:28,476 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-20 07:42:28,477 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-20 07:42:28,479 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-20 07:42:28,499 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-20 07:42:28,500 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-20 07:42:28,500 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-20 07:42:28,500 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-20 07:42:28,500 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-20 07:42:32,234 [INFO] leetcode-auto-solver: ============================================================
+2026-11-20 07:42:32,234 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-20 07:42:32,234 [INFO] leetcode-auto-solver: ============================================================
+2026-11-20 07:42:32,344 [INFO] src.leetcode_api: Daily challenge: [3041] Maximize Consecutive Elements in an Array After Modification (Hard)
+2026-11-20 07:42:32,344 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3041] Maximize Consecutive Elements in an Array After Modification (Hard)
+2026-11-20 07:42:32,508 [INFO] src.leetcode_api: Fetched details for: Maximize Consecutive Elements in an Array After Modification
+2026-11-20 07:42:32,508 [INFO] src.bulk_downloader: 📦 DB hit: maximize-consecutive-elements-in-an-array-after-modification [python3] from walkccc/LeetCode
+2026-11-20 07:42:32,508 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-20 07:42:32,508 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-20 07:42:35,220 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-20 07:42:41,704 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-20 07:42:41,704 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-20 07:42:41,732 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/maximize-consecutive-elements-in-an-array-after-modification/...
+2026-11-20 07:42:44,887 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2199835828
+2026-11-20 07:42:48,088 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 244 ms, Memory: 43.1 MB
+2026-11-20 07:42:48,094 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
+2026-11-20 07:42:48,094 [INFO] src.solutions_db: Saved solution: 3041_maximize-consecutive-elements-in-an-array-after-modification.py
