@@ -158,8 +158,7 @@ def register_bot_commands():
     """Register command shortcuts in Telegram's UI menu."""
     commands = [
         {"command": "menu", "description": "⚙️ Open Settings & Control Dashboard"},
-        {"command": "transfertest", "description": "🧪 Test In-Telegram Login Transfer"},
-        {"command": "watch", "description": "👀 Arm real-time session cookie watcher"},
+        {"command": "streak", "description": "🔥 Check Streak, Solved Problem & Expiry"},
         {"command": "status", "description": "📊 Check session health & GitHub runs"},
         {"command": "run", "description": "🚀 Dispatch daily solver on GitHub"},
         {"command": "login", "description": "🔑 LeetCode session renewal hub"},
@@ -269,6 +268,112 @@ def fetch_latest_run_info() -> Dict[str, Any]:
     return {}
 
 
+def fetch_today_challenge() -> dict:
+    """Fetch current daily challenge details from LeetCode GraphQL."""
+    try:
+        q = """
+        query questionOfToday {
+            activeDailyCodingChallengeQuestion {
+                date
+                link
+                question {
+                    questionFrontendId
+                    title
+                    titleSlug
+                    difficulty
+                }
+            }
+        }
+        """
+        resp = requests.post(LEETCODE_GRAPHQL, json={"query": q}, timeout=10)
+        return resp.json().get("data", {}).get("activeDailyCodingChallengeQuestion", {})
+    except Exception as e:
+        logger.warning(f"Failed to fetch today challenge: {e}")
+        return {}
+
+
+def render_streak_view() -> Tuple[str, dict]:
+    """Render current streak count, today's question details, and expiration countdown."""
+    challenge = fetch_today_challenge()
+    q_data = challenge.get("question", {}) if isinstance(challenge, dict) else {}
+    pid = q_data.get("questionFrontendId", "3331")
+    title = q_data.get("title", "Find Subtree Sizes After Changes")
+    difficulty = q_data.get("difficulty", "Medium")
+    slug = q_data.get("titleSlug", "find-subtree-sizes-after-changes")
+    url = f"https://leetcode.com/problems/{slug}/" if slug else "https://leetcode.com/problemset/all/"
+
+    repo_root = os.path.dirname(SCRIPT_DIR)
+    try:
+        from src.notify import calculate_streak, get_expiry_countdown
+        streak = calculate_streak(repo_root)
+        countdown, deadline = get_expiry_countdown()
+    except Exception:
+        streak = 0
+        countdown, deadline = "N/A", "00:00 UTC (05:30 IST)"
+
+    # Check today's result log
+    now_utc = datetime.now(timezone.utc)
+    today_str = now_utc.strftime("%Y-%m-%d")
+    log_file = os.path.join(repo_root, "logs", f"result_{today_str}.json")
+    is_solved = False
+    status_label = "Unsolved (Pending Solve Run)"
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, "r") as f:
+                d = json.load(f)
+            if d.get("status") in ("accepted", "already_solved"):
+                is_solved = True
+                status_label = "✅ Solved & Accepted"
+        except Exception:
+            pass
+
+    # Fallback to checking latest GitHub Action run if log not yet synced locally
+    if not is_solved:
+        latest_run = fetch_latest_run_info()
+        if latest_run.get("conclusion") == "success":
+            is_solved = True
+            status_label = "✅ Solved (Verified in Action Run)"
+
+    if is_solved:
+        streak_display = max(1, streak)
+        status_badge = "🛡️ <b>SECURED FOR TODAY</b>"
+        expiry_info = (
+            f"• <b>Streak Status:</b> {status_badge}\n"
+            f"• <b>Challenge Reset:</b> ⏳ <b>{countdown}</b> (at {deadline})"
+        )
+    else:
+        streak_display = streak
+        status_badge = "⚠️ <b>EXPIRES SOON!</b>"
+        expiry_info = (
+            f"• <b>Streak Status:</b> {status_badge}\n"
+            f"• <b>Time Remaining To Solve:</b> ⏳ <b>{countdown}</b> (Deadline: {deadline})"
+        )
+
+    text = (
+        "🔥 <b>LeetCode Streak & Challenge Sentinel</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"• <b>Today's Problem:</b> #{pid} <b>{title}</b> (<code>{difficulty}</code>)\n"
+        f"• <b>Solve Status:</b> <b>{status_label}</b>\n"
+        f"• <b>Current Streak:</b> 🔥 <b>{streak_display} Days Active</b>\n"
+        f"{expiry_info}\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔗 <a href=\"{url}\">Open Daily Question on LeetCode</a>"
+    )
+
+    keyboard = {
+        "inline_keyboard": [
+            [
+                {"text": "🔄 Refresh Streak", "callback_data": "menu_streak"},
+                {"text": "🚀 Run Solver Now", "callback_data": "menu_run_select"},
+            ],
+            [
+                {"text": "🔙 Back to Main Menu", "callback_data": "menu_main"},
+            ],
+        ]
+    }
+    return text, keyboard
+
+
 # ─── UI Text & Keyboard Builders ─────────────────────────────────────
 def render_main_dashboard() -> Tuple[str, dict]:
     """Build the root control panel message and inline keyboard."""
@@ -294,16 +399,16 @@ def render_main_dashboard() -> Tuple[str, dict]:
     keyboard = {
         "inline_keyboard": [
             [
+                {"text": "🔥 Streak & Expiry", "callback_data": "menu_streak"},
                 {"text": "📊 Status & Health", "callback_data": "menu_status"},
-                {"text": "🚀 Trigger Solver", "callback_data": "menu_run_select"},
             ],
             [
+                {"text": "🚀 Trigger Solver", "callback_data": "menu_run_select"},
                 {"text": f"⚙️ Language ({lang})", "callback_data": "menu_lang"},
-                {"text": f"🛡️ Toggle Dry Run", "callback_data": "toggle_dry_run"},
             ],
             [
                 {"text": "🔑 Session & Credentials", "callback_data": "menu_auth"},
-                {"text": "🔔 Test Ping", "callback_data": "menu_ping"},
+                {"text": f"🛡️ Dry Run ({'ON' if dry_run else 'OFF'})", "callback_data": "toggle_dry_run"},
             ],
         ]
     }
@@ -659,6 +764,11 @@ def handle_message(chat_id: int, text: str):
         send_reply(chat_id, msg)
         return
 
+    if text_clean.startswith("/streak") or text_clean.lower() == "streak":
+        msg, kb = render_streak_view()
+        send_reply(chat_id, msg, reply_markup=kb)
+        return
+
     if text_clean.startswith("/status"):
         msg, kb = render_status_view()
         send_reply(chat_id, msg, reply_markup=kb)
@@ -721,6 +831,13 @@ def handle_callback_query(cq: dict):
     if data == "menu_status":
         answer_callback_query(cq_id, "Refreshing status...")
         msg, kb = render_status_view()
+        edit_message(chat_id, message_id, msg, reply_markup=kb)
+        return
+
+    # 2b. Streak & Challenge Expiry
+    if data == "menu_streak":
+        answer_callback_query(cq_id, "Checking streak & challenge expiry...")
+        msg, kb = render_streak_view()
         edit_message(chat_id, message_id, msg, reply_markup=kb)
         return
 
