@@ -105,6 +105,8 @@ jobs:
           SOLUTION_LANGUAGE: ${{ github.event.inputs.language || 'python3' }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           SKIP_IF_SOLVED: "true"
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}

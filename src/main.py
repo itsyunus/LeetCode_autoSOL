@@ -204,6 +204,11 @@ class DailySolverPipeline:
                     code=code_text,
                     explanation="This challenge is already completed and accepted on your LeetCode profile.",
                 )
+                try:
+                    from .notify import send_streak_report
+                    send_streak_report(result)
+                except Exception as n_err:
+                    logger.warning("Telegram streak report skipped: %s", n_err)
                 return result
 
             # ── Step 3: Fetch full problem details ───────────────────
@@ -482,6 +487,11 @@ class DailySolverPipeline:
                     detail, current_code, timeout_seconds=90
                 )
             self.notifier.send_report(result, code=current_code, explanation=explanation)
+            try:
+                from .notify import send_streak_report
+                send_streak_report(result)
+            except Exception as n_err:
+                logger.warning("Telegram streak report skipped: %s", n_err)
 
             self.browser.close()
             return result
@@ -491,6 +501,11 @@ class DailySolverPipeline:
             result["status"] = "error"
             result["error"] = str(e)
             self.notifier.send_report(result, code=None, explanation=f"Pipeline error encountered: {e}")
+            try:
+                from .notify import send_streak_report
+                send_streak_report(result)
+            except Exception:
+                pass
             self.browser.close()
             return result
 
