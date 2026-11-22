@@ -631,3 +631,89 @@ RuntimeError: Run returned 403
 2026-11-21 23:07:54,136 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
 2026-11-21 23:07:54,136 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
 2026-11-21 23:07:54,136 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-22 07:21:07,711 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-22 07:21:07,713 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-22 07:21:07,713 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-22 07:21:07,713 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-22 07:21:07,713 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-22 07:21:07,716 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-22 07:21:07,736 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-22 07:21:07,737 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-22 07:21:07,737 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-22 07:21:07,737 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-22 07:21:07,737 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-22 07:21:11,360 [INFO] leetcode-auto-solver: ============================================================
+2026-11-22 07:21:11,360 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-22 07:21:11,360 [INFO] leetcode-auto-solver: ============================================================
+2026-11-22 07:21:11,463 [INFO] src.leetcode_api: Daily challenge: [2124] Check if All A's Appears Before All B's (Easy)
+2026-11-22 07:21:11,463 [INFO] leetcode-auto-solver: 📋 Daily Problem: [2124] Check if All A's Appears Before All B's (Easy)
+2026-11-22 07:21:11,577 [INFO] src.leetcode_api: Fetched details for: Check if All A's Appears Before All B's
+2026-11-22 07:21:11,577 [INFO] src.bulk_downloader: 📦 DB hit: check-if-all-as-appears-before-all-bs [python3] from walkccc/LeetCode
+2026-11-22 07:21:11,578 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-22 07:21:11,578 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-22 07:21:13,442 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-22 07:21:19,950 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-22 07:21:19,950 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-22 07:21:19,985 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/check-if-all-as-appears-before-all-bs/...
+2026-11-22 07:21:23,131 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2201115888
+2026-11-22 07:21:24,730 [WARNING] src.browser_submitter: Submission 2201115888 status poll 1/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:21:26,767 [WARNING] src.browser_submitter: Submission 2201115888 status poll 2/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:21:30,808 [WARNING] src.browser_submitter: Submission 2201115888 status poll 3/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:21:36,854 [WARNING] src.browser_submitter: Submission 2201115888 status poll 4/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:21:44,917 [WARNING] src.browser_submitter: Submission 2201115888 status poll 5/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:21:54,967 [WARNING] src.browser_submitter: Submission 2201115888 status poll 6/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:22:05,016 [WARNING] src.browser_submitter: Submission 2201115888 status poll 7/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:22:15,065 [WARNING] src.browser_submitter: Submission 2201115888 status poll 8/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:22:25,113 [WARNING] src.browser_submitter: Submission 2201115888 status poll 9/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:22:35,160 [WARNING] src.browser_submitter: Submission 2201115888 status poll 10/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:22:45,305 [WARNING] src.browser_submitter: Submission 2201115888 status poll 11/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:22:55,357 [WARNING] src.browser_submitter: Submission 2201115888 status poll 12/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:23:05,405 [WARNING] src.browser_submitter: Submission 2201115888 status poll 13/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:23:15,451 [WARNING] src.browser_submitter: Submission 2201115888 status poll 14/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:23:25,922 [WARNING] src.browser_submitter: Submission 2201115888 status poll 15/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:23:35,958 [WARNING] src.browser_submitter: Submission 2201115888 status poll 16/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:23:46,003 [WARNING] src.browser_submitter: Submission 2201115888 status poll 17/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:23:56,045 [WARNING] src.browser_submitter: Submission 2201115888 status poll 18/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:24:06,084 [WARNING] src.browser_submitter: Submission 2201115888 status poll 19/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:24:16,127 [WARNING] src.browser_submitter: Submission 2201115888 status poll 20/20 temporarily failed: Page.evaluate: Error: LeetCode status check returned non-JSON HTTP 403
+    at eval (eval at evaluate (:370:30), <anonymous>:9:31)
+    at async <anonymous>:381:23
+2026-11-22 07:24:26,139 [WARNING] leetcode-auto-solver: Submission 2201115888 status polling failed; attempting GraphQL reconciliation: Could not verify submission 2201115888 after 20 polls; the submission may still be processing

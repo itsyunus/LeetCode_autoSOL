@@ -1,0 +1,21 @@
+{
+  "status": "submitted_unverified",
+  "date": "2026-11-22T07:21:11.360462+00:00",
+  "problem": {
+    "id": "2124",
+    "title": "Check if All A's Appears Before All B's",
+    "slug": "check-if-all-as-appears-before-all-bs",
+    "difficulty": "Easy",
+    "date": "2026-11-22",
+    "tags": [
+      "String"
+    ]
+  },
+  "submission": {
+    "id": 2201115888,
+    "status": "verification_pending",
+    "language": "python3",
+    "attempts": 1
+  },
+  "error": "LeetCode returned submission ID 2201115888, but REST polling and GraphQL reconciliation could not confirm a terminal verdict: Could not verify submission 2201115888 after 20 polls; the submission may still be processing. The solver stopped to avoid a duplicate submission."
+}
