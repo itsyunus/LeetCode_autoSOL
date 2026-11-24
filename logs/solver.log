@@ -717,3 +717,23 @@ RuntimeError: Run returned 403
     at eval (eval at evaluate (:370:30), <anonymous>:9:31)
     at async <anonymous>:381:23
 2026-11-22 07:24:26,139 [WARNING] leetcode-auto-solver: Submission 2201115888 status polling failed; attempting GraphQL reconciliation: Could not verify submission 2201115888 after 20 polls; the submission may still be processing
+2026-11-24 06:08:24,877 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-24 06:08:24,878 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-24 06:08:24,878 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-24 06:08:24,878 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-24 06:08:24,879 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-24 06:08:24,881 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-24 06:08:24,902 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-24 06:08:24,902 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-24 06:08:24,903 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-24 06:08:24,903 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-24 06:08:24,903 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-24 06:08:28,467 [INFO] leetcode-auto-solver: ============================================================
+2026-11-24 06:08:28,467 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-24 06:08:28,467 [INFO] leetcode-auto-solver: ============================================================
+2026-11-24 06:08:28,701 [INFO] src.leetcode_api: Daily challenge: [3411] Maximum Subarray With Equal Products (Easy)
+2026-11-24 06:08:28,701 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3411] Maximum Subarray With Equal Products (Easy)
+2026-11-24 06:08:28,915 [INFO] src.leetcode_api: Fetched details for: Maximum Subarray With Equal Products
+2026-11-24 06:08:28,915 [INFO] src.bulk_downloader: 📦 DB hit: maximum-subarray-with-equal-products [python3] from walkccc/LeetCode
+2026-11-24 06:08:28,915 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-24 06:08:28,916 [INFO] leetcode-auto-solver: DRY RUN — skipping submission

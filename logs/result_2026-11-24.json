@@ -1,0 +1,21 @@
+{
+  "status": "dry_run",
+  "date": "2026-11-24T06:08:28.467690+00:00",
+  "problem": {
+    "id": "3411",
+    "title": "Maximum Subarray With Equal Products",
+    "slug": "maximum-subarray-with-equal-products",
+    "difficulty": "Easy",
+    "date": "2026-11-24",
+    "tags": [
+      "Array",
+      "Math",
+      "Sliding Window",
+      "Enumeration",
+      "Number Theory"
+    ]
+  },
+  "submission": null,
+  "error": null,
+  "solution_code": "class Solution:\n  def maxLength(self, nums: list[int]) -> int:\n    n = len(nums)\n    ans = 0\n\n    for i in range(n):\n      prod = 1\n      l = 1\n      g = 0\n      for j in range(i, n):\n        prod *= nums[j]\n        l = math.lcm(l, nums[j])\n        g = math.gcd(g, nums[j])\n        if prod == l * g:\n          ans = max(ans, j - i + 1)\n\n    return ans\n"
+}
