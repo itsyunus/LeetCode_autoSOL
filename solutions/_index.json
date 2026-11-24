@@ -83,11 +83,22 @@
         "frontend_id": "3041",
         "source": "bulk_db"
       }
+    },
+    "maximum-subarray-with-equal-products": {
+      "file": "3411_maximum-subarray-with-equal-products.py",
+      "question_id": "3702",
+      "title": "Maximum Subarray With Equal Products",
+      "difficulty": "Easy",
+      "solved_at": "2026-11-24T06:11:14.530813+00:00",
+      "metadata": {
+        "frontend_id": "3411",
+        "source": "bulk_db"
+      }
     }
   },
   "stats": {
-    "total": 7,
-    "easy": 1,
+    "total": 8,
+    "easy": 2,
     "medium": 4,
     "hard": 2
   }
