@@ -1,0 +1,21 @@
+{
+  "status": "validation_inconclusive",
+  "date": "2026-11-25T09:02:29.778269+00:00",
+  "problem": {
+    "id": "3934",
+    "title": "Smallest Unique Subarray",
+    "slug": "smallest-unique-subarray",
+    "difficulty": "Hard",
+    "date": "2026-11-25",
+    "tags": [
+      "Array",
+      "Hash Table",
+      "Binary Search",
+      "Rolling Hash",
+      "Suffix Array",
+      "Hash Function"
+    ]
+  },
+  "submission": null,
+  "error": "Validation could not be verified; no submission is permitted: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+}
