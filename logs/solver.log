@@ -856,3 +856,48 @@ Traceback (most recent call last):
   File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/solver.py", line 295, in generate_solution
     raise RuntimeError(
 RuntimeError: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-25 10:41:14,524 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-25 10:41:14,525 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-25 10:41:14,526 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-25 10:41:14,526 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-25 10:41:14,526 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-25 10:41:14,529 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-25 10:41:14,549 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-25 10:41:14,550 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-25 10:41:14,551 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-25 10:41:14,551 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-25 10:41:14,551 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-25 10:41:18,246 [INFO] leetcode-auto-solver: ============================================================
+2026-11-25 10:41:18,246 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-25 10:41:18,246 [INFO] leetcode-auto-solver: ============================================================
+2026-11-25 10:41:18,367 [INFO] src.leetcode_api: Daily challenge: [3934] Smallest Unique Subarray (Hard)
+2026-11-25 10:41:18,367 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3934] Smallest Unique Subarray (Hard)
+2026-11-25 10:41:18,549 [INFO] src.leetcode_api: Fetched details for: Smallest Unique Subarray
+2026-11-25 10:41:18,549 [INFO] src.bulk_downloader: 📦 DB hit: smallest-unique-subarray [python3] from kamyu104/LeetCode-Solutions
+2026-11-25 10:41:18,549 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-25 10:41:18,551 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-25 10:41:19,067 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-25 10:41:25,562 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-25 10:41:26,313 [INFO] src.solver: Generation attempt 1/3...
+2026-11-25 10:41:26,322 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-25 10:41:28,100 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-25 10:41:28,101 [ERROR] src.solver: Attempt 1 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-25 10:41:30,101 [INFO] src.solver: Generation attempt 2/3...
+2026-11-25 10:41:30,101 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-25 10:41:52,972 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-25 10:41:52,973 [ERROR] src.solver: Attempt 2 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-25 10:41:56,973 [INFO] src.solver: Generation attempt 3/3...
+2026-11-25 10:41:56,973 [INFO] google_genai.models: AFC is enabled with max remote calls: 10.
+2026-11-25 10:41:58,562 [INFO] httpx2: HTTP Request: POST https://generativelanguage.googleapis.com/v1/models/gemini-3.8-flash:generateContent "HTTP/1.1 503 Service Unavailable"
+2026-11-25 10:41:58,563 [ERROR] src.solver: Attempt 3 failed: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-25 10:41:58,563 [ERROR] leetcode-auto-solver: Sample validation could not be completed
+Traceback (most recent call last):
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/main.py", line 322, in run
+    fallback = self._next_runtime_fallback(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/main.py", line 98, in _next_runtime_fallback
+    candidate, metadata = self.solver.generate_solution(detail, lang_slug=language)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/solver.py", line 295, in generate_solution
+    raise RuntimeError(
+RuntimeError: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
