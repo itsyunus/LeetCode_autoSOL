@@ -1,0 +1,25 @@
+{
+  "status": "accepted",
+  "date": "2026-11-26T08:51:39.733063+00:00",
+  "problem": {
+    "id": "3360",
+    "title": "Stone Removal Game",
+    "slug": "stone-removal-game",
+    "difficulty": "Easy",
+    "date": "2026-11-26",
+    "tags": [
+      "Math",
+      "Simulation"
+    ]
+  },
+  "submission": {
+    "id": 2203776364,
+    "runtime": "0 ms",
+    "memory": "19.1 MB",
+    "runtime_percentile": 100,
+    "memory_percentile": 59.134699999999995,
+    "attempts": 1,
+    "language": "python3"
+  },
+  "error": null
+}

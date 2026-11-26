@@ -6299,6 +6299,34 @@
     "source": "kamyu104/LeetCode-Solutions",
     "title": "Count Connected Subgraphs With Even Node Sum"
   },
+  "count-consistent-subarrays-i": {
+    "file": "code/count-consistent-subarrays-i.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/count-consistent-subarrays-i.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "count-consistent-subarrays-i",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Count Consistent Subarrays I"
+  },
+  "count-consistent-subarrays-ii": {
+    "file": "code/count-consistent-subarrays-ii.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/count-consistent-subarrays-ii.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "count-consistent-subarrays-ii",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Count Consistent Subarrays Ii"
+  },
   "count-covered-buildings": {
     "file": "code/count-covered-buildings.py",
     "id": "3531",
@@ -16043,6 +16071,20 @@
     "source": "walkccc/LeetCode",
     "title": "Find the Maximum Length of Valid Subsequence II"
   },
+  "find-the-maximum-length-of-valid-subsequence-iii": {
+    "file": "code/find-the-maximum-length-of-valid-subsequence-iii.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/find-the-maximum-length-of-valid-subsequence-iii.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "find-the-maximum-length-of-valid-subsequence-iii",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Find The Maximum Length Of Valid Subsequence Iii"
+  },
   "find-the-maximum-number-of-elements-in-subset": {
     "file": "code/find-the-maximum-number-of-elements-in-subset.py",
     "id": "3020",
@@ -17876,6 +17918,20 @@
     "slug": "furthest-point-from-origin",
     "source": "walkccc/LeetCode",
     "title": "Furthest Point From Origin"
+  },
+  "game-of-divisible-sums": {
+    "file": "code/game-of-divisible-sums.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/game-of-divisible-sums.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "game-of-divisible-sums",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Game Of Divisible Sums"
   },
   "game-of-life": {
     "file": "code/game-of-life.py",
@@ -24316,6 +24372,20 @@
     "slug": "maximize-score-after-pair-deletions",
     "source": "walkccc/LeetCode",
     "title": "Maximize Score After Pair Deletions"
+  },
+  "maximize-score-after-zeroing-subtrees": {
+    "file": "code/maximize-score-after-zeroing-subtrees.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/maximize-score-after-zeroing-subtrees.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "maximize-score-after-zeroing-subtrees",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Maximize Score After Zeroing Subtrees"
   },
   "maximize-score-of-numbers-in-ranges": {
     "file": "code/maximize-score-of-numbers-in-ranges.py",
@@ -31064,6 +31134,20 @@
     "slug": "minimum-cost-to-make-at-least-one-valid-path-in-a-grid",
     "source": "walkccc/LeetCode",
     "title": "Minimum Cost to Make at Least One Valid Path in a Grid"
+  },
+  "minimum-cost-to-make-red-nodes-connected": {
+    "file": "code/minimum-cost-to-make-red-nodes-connected.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/minimum-cost-to-make-red-nodes-connected.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "minimum-cost-to-make-red-nodes-connected",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Minimum Cost To Make Red Nodes Connected"
   },
   "minimum-cost-to-make-two-binary-strings-equal": {
     "file": "code/minimum-cost-to-make-two-binary-strings-equal.py",
@@ -48214,6 +48298,20 @@
     "slug": "sum-of-compatible-numbers-in-range-i",
     "source": "kamyu104/LeetCode-Solutions",
     "title": "Sum Of Compatible Numbers In Range I"
+  },
+  "sum-of-compatible-numbers-in-range-ii": {
+    "file": "code/sum-of-compatible-numbers-in-range-ii.py",
+    "id": "0",
+    "languages": {
+      "python3": {
+        "file": "code/sum-of-compatible-numbers-in-range-ii.py",
+        "language": "python3",
+        "source": "kamyu104/LeetCode-Solutions"
+      }
+    },
+    "slug": "sum-of-compatible-numbers-in-range-ii",
+    "source": "kamyu104/LeetCode-Solutions",
+    "title": "Sum Of Compatible Numbers In Range Ii"
   },
   "sum-of-consecutive-subarrays": {
     "file": "code/sum-of-consecutive-subarrays.py",

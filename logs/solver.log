@@ -901,3 +901,31 @@ Traceback (most recent call last):
   File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/solver.py", line 295, in generate_solution
     raise RuntimeError(
 RuntimeError: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-26 08:51:33,519 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-26 08:51:33,521 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-26 08:51:33,521 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-26 08:51:33,521 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-26 08:51:33,522 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-26 08:51:33,525 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-26 08:51:33,545 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-26 08:51:33,546 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-26 08:51:33,546 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-26 08:51:33,546 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-26 08:51:33,546 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-26 08:51:39,733 [INFO] leetcode-auto-solver: ============================================================
+2026-11-26 08:51:39,733 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-26 08:51:39,733 [INFO] leetcode-auto-solver: ============================================================
+2026-11-26 08:51:39,848 [INFO] src.leetcode_api: Daily challenge: [3360] Stone Removal Game (Easy)
+2026-11-26 08:51:39,848 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3360] Stone Removal Game (Easy)
+2026-11-26 08:51:39,988 [INFO] src.leetcode_api: Fetched details for: Stone Removal Game
+2026-11-26 08:51:39,988 [INFO] src.bulk_downloader: 📦 DB hit: stone-removal-game [python3] from walkccc/LeetCode
+2026-11-26 08:51:39,989 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-26 08:51:39,989 [INFO] leetcode-auto-solver: Sample validation attempt 1/5
+2026-11-26 08:51:43,314 [INFO] src.browser_submitter: Browser context ready with session cookies
+2026-11-26 08:51:50,077 [INFO] leetcode-auto-solver: Sample tests passed
+2026-11-26 08:51:50,077 [INFO] leetcode-auto-solver: 📤 Submission attempt 1/5
+2026-11-26 08:51:50,104 [INFO] src.browser_submitter: Navigating to https://leetcode.com/problems/stone-removal-game/...
+2026-11-26 08:51:54,178 [INFO] src.browser_submitter: ✅ Submitted! Submission ID: 2203776364
+2026-11-26 08:51:57,680 [INFO] src.browser_submitter: ✅ ACCEPTED — Runtime: 0 ms, Memory: 19.1 MB
+2026-11-26 08:51:57,684 [INFO] leetcode-auto-solver: 🎉 ACCEPTED!
+2026-11-26 08:51:57,685 [INFO] src.solutions_db: Saved solution: 3360_stone-removal-game.py
