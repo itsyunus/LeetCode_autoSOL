@@ -1,6 +1,6 @@
 {
-  "status": "validation_inconclusive",
-  "date": "2026-11-27T08:59:36.580194+00:00",
+  "status": "dry_run",
+  "date": "2026-11-27T13:53:03.330172+00:00",
   "problem": {
     "id": "3946",
     "title": "Maximum Number of Items From Sale I",
@@ -14,5 +14,6 @@
     ]
   },
   "submission": null,
-  "error": "Validation could not be verified; no submission is permitted: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+  "error": null,
+  "solution_code": "# Time:  O(rlogr + n * b), r = max(f for f, _ in items)\n# Space: O(r + b)\n\n# freq table, knapsack dp, greedy\nclass Solution(object):\n    def maximumSaleItems(self, items, budget):\n        \"\"\"\n        :type items: List[List[int]]\n        :type budget: int\n        :rtype: int\n        \"\"\"\n        NEG_INF = float(\"-inf\")\n        cnt = [0]*(max(f for f, _ in items)+1)\n        for f, _ in items:\n            cnt[f] += 1\n        total = [0]*len(cnt)\n        for i in xrange(1, len(total)):\n            if not cnt[i]:\n                continue\n            for j in xrange(i, len(total), i):\n                total[i] += cnt[j]\n        dp = [NEG_INF]*(budget+1)\n        dp[0] = 0\n        for f, p in items:\n            for i in reversed(xrange(p, len(dp))):\n                dp[i] = max(dp[i], dp[i-p]+total[f])\n        min_p = min(p for _, p in items)\n        return max(x+(budget-i)//min_p for i, x in enumerate(dp))\n\n\n# Time:  O(rlogr + n * b), r = max(f for f, _ in items)\n# Space: O(r + b)\n# freq table, knapsack dp, greedy\nclass Solution2(object):\n    def maximumSaleItems(self, items, budget):\n        \"\"\"\n        :type items: List[List[int]]\n        :type budget: int\n        :rtype: int\n        \"\"\"\n        NEG_INF = float(\"-inf\")\n        cnt = [0]*(max(f for f, _ in items)+1)\n        for f, _ in items:\n            cnt[f] += 1\n        total = [0]*len(cnt)\n        for i in xrange(1, len(total)):\n            if not cnt[i]:\n                continue\n            for j in xrange(i, len(total), i):\n                total[i] += cnt[j]\n        dp = [NEG_INF]*(budget+1)\n        dp[0] = 0\n        for f, p in items:\n            for i in reversed(xrange(p, len(dp))):\n                dp[i] = max(dp[i], dp[i-p]+total[f])\n            for i in xrange(p, len(dp)):\n                dp[i] = max(dp[i], dp[i-p]+1)\n        return max(dp)\n"
 }

@@ -975,3 +975,23 @@ Traceback (most recent call last):
   File "/home/runner/work/LeetCode_autoSOL/LeetCode_autoSOL/src/solver.py", line 295, in generate_solution
     raise RuntimeError(
 RuntimeError: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}
+2026-11-27 13:52:59,100 [INFO] src.leetcode_api: Problem 'example-problem' was accepted on challenge date 2026-11-12 — skipping.
+2026-11-27 13:52:59,102 [INFO] src.bulk_downloader: Index saved: 1 solutions indexed
+2026-11-27 13:52:59,102 [INFO] src.bulk_downloader: 🌐 Downloaded and cached cpp solution for climbing-stairs-ii from Doocs
+2026-11-27 13:52:59,102 [INFO] src.bulk_downloader: 📦 DB hit: climbing-stairs-ii [cpp] from doocs/leetcode
+2026-11-27 13:52:59,103 [INFO] src.bulk_downloader: No Doocs extension mapping for language unknown
+2026-11-27 13:52:59,105 [WARNING] leetcode-auto-solver: AI explanation failed; continuing without it: Gemini unavailable
+2026-11-27 13:52:59,126 [WARNING] leetcode-auto-solver: AI explanation exceeded 0.02 seconds; continuing without it.
+2026-11-27 13:52:59,127 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-27 13:52:59,127 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-27 13:52:59,127 [WARNING] leetcode-auto-solver: Runtime Error in python3; trying a fresh cpp solution.
+2026-11-27 13:52:59,127 [INFO] leetcode-auto-solver: cpp fallback passed sample tests.
+2026-11-27 13:53:03,330 [INFO] leetcode-auto-solver: ============================================================
+2026-11-27 13:53:03,330 [INFO] leetcode-auto-solver: 🚀 LeetCode Daily Auto-Solver — Starting Pipeline
+2026-11-27 13:53:03,330 [INFO] leetcode-auto-solver: ============================================================
+2026-11-27 13:53:03,491 [INFO] src.leetcode_api: Daily challenge: [3946] Maximum Number of Items From Sale I (Medium)
+2026-11-27 13:53:03,491 [INFO] leetcode-auto-solver: 📋 Daily Problem: [3946] Maximum Number of Items From Sale I (Medium)
+2026-11-27 13:53:03,728 [INFO] src.leetcode_api: Fetched details for: Maximum Number of Items From Sale I
+2026-11-27 13:53:03,728 [INFO] src.bulk_downloader: 📦 DB hit: maximum-number-of-items-from-sale-i [python3] from kamyu104/LeetCode-Solutions
+2026-11-27 13:53:03,728 [INFO] leetcode-auto-solver: 📦 Found in bulk solutions DB — using pre-downloaded solution
+2026-11-27 13:53:03,730 [INFO] leetcode-auto-solver: DRY RUN — skipping submission
