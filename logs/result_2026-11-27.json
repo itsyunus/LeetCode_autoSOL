@@ -1,0 +1,18 @@
+{
+  "status": "validation_inconclusive",
+  "date": "2026-11-27T08:59:36.580194+00:00",
+  "problem": {
+    "id": "3946",
+    "title": "Maximum Number of Items From Sale I",
+    "slug": "maximum-number-of-items-from-sale-i",
+    "difficulty": "Medium",
+    "date": "2026-11-27",
+    "tags": [
+      "Array",
+      "Dynamic Programming",
+      "Greedy"
+    ]
+  },
+  "submission": null,
+  "error": "Validation could not be verified; no submission is permitted: Failed to generate solution after 3 attempts. Last error: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+}
