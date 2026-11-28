@@ -105,12 +105,30 @@
         "frontend_id": "3360",
         "source": "bulk_db"
       }
+    },
+    "maximum-number-of-items-from-sale-ii": {
+      "file": "3947_maximum-number-of-items-from-sale-ii.py",
+      "question_id": "3745",
+      "title": "Maximum Number of Items From Sale II",
+      "difficulty": "Medium",
+      "solved_at": "2026-11-28T08:27:00.843324+00:00",
+      "metadata": {
+        "frontend_id": "3947",
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "language": "cpp",
+        "question_id": "3745",
+        "title": "Maximum Number of Items From Sale II",
+        "source": "ai_language_fallback",
+        "fallback_from": "python3",
+        "sample_validation_passed": true
+      }
     }
   },
   "stats": {
-    "total": 9,
+    "total": 10,
     "easy": 3,
-    "medium": 4,
+    "medium": 5,
     "hard": 2
   }
 }

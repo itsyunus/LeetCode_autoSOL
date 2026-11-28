@@ -1,0 +1,27 @@
+{
+  "status": "accepted",
+  "date": "2026-11-28T08:20:59.393581+00:00",
+  "problem": {
+    "id": "3947",
+    "title": "Maximum Number of Items From Sale II",
+    "slug": "maximum-number-of-items-from-sale-ii",
+    "difficulty": "Medium",
+    "date": "2026-11-28",
+    "tags": [
+      "Array",
+      "Greedy",
+      "Sorting",
+      "Heap (Priority Queue)"
+    ]
+  },
+  "submission": {
+    "id": 2205017092,
+    "runtime": "148 ms",
+    "memory": "304.7 MB",
+    "runtime_percentile": 43,
+    "memory_percentile": 52,
+    "attempts": 1,
+    "language": "cpp"
+  },
+  "error": null
+}
